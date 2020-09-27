@@ -15,4 +15,4 @@ Zig has various [tiers](https://ziglang.org/#Support-Table).
 
 The Microsoft Windows version of Zig ships using calls ["winternl.h"](https://docs.microsoft.com/en-us/windows/win32/devnotes/calling-internal-apis) functions which are not portable across versions of Microsoft Windows. The Zig standard library calls those functions and does not respond gracefully if a function has been changed or is missing from the Microsoft Windows Operating System on which it is being run.
 
-If targeting [Tier 2](https://ziglang.org/#Tier-2-Support) or lower versions of Microsoft Windows only use the Zig standard libary `@import("std");` for `comptime`.
+If targeting [Tier 2](https://ziglang.org/#Tier-2-Support) or lower versions of Microsoft Windows and using the Zig standard libary `@import("std");` for anything other than `comptime` then test thoroughly on the target platform.
