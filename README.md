@@ -3,7 +3,7 @@
 
 ---
 
-Not much content yet. The least Zig (beta) release is at 0.9.1 at the time of writing.
+Not much content yet. The Zig (beta) release is at 0.9.1 at the time of writing.
 
 ---
 
