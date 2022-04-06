@@ -15,6 +15,8 @@ const std = @import("std");
 
 const WINAPI = std.os.windows.WINAPI;
 
+const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
+
 const win32 = struct {
     usingnamespace @import("win32").zig;
     usingnamespace @import("win32").system.library_loader;
@@ -33,10 +35,6 @@ const HWND = win32.HWND;
 const HDC = win32.HDC;
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
 const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
-
-fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?win32.HBRUSH {
-    return @as(?win32.HBRUSH, win32.GetStockObject(hbrush));
-}
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
