@@ -27,12 +27,13 @@ fn MessageBoxPrintf(
     comptime caption: []const u8,
     comptime fmt: []const u8,
     args: anytype,
-) !win32.MESSAGEBOX_RESULT {
+) win32.MESSAGEBOX_RESULT {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    const buffer = try std.fmt.allocPrint(allocator, fmt, args);
-    const string = try std.unicode.utf8ToUtf16LeWithNull(allocator, buffer);
+    // catch unreachable to ignore any errors.
+    const buffer = std.fmt.allocPrint(allocator, fmt, args) catch unreachable;
+    const string = std.unicode.utf8ToUtf16LeWithNull(allocator, buffer) catch unreachable;
 
     defer {
         allocator.free(string);
@@ -60,7 +61,7 @@ pub export fn wWinMain(
         "ScrnSize",
         "The screen is {d} pixels wide by {d} pixels high.",
         .{ cxScreen, cyScreen },
-    ) catch {}; // ignore any error
+    );
 
     return 0;
 }
