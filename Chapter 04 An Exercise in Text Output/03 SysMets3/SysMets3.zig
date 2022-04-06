@@ -15,8 +15,6 @@ const std = @import("std");
 
 const WINAPI = std.os.windows.WINAPI;
 
-const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
-
 const sysmetrics = @import("sysmets").sysmetrics;
 
 const win32 = struct {
@@ -36,6 +34,10 @@ const HINSTANCE = win32.HINSTANCE;
 const MSG = win32.MSG;
 const HWND = win32.HWND;
 const HDC = win32.HDC;
+const LPARAM = win32.LPARAM;
+const WPARAM = win32.WPARAM;
+const LRESULT = win32.LRESULT;
+const CREATESTRUCT = win32.CREATESTRUCT;
 const SCROLLINFO = win32.SCROLLINFO;
 const SCROLLINFO_MASK = win32.SCROLLINFO_MASK;
 const SIF_POS = win32.SIF_POS;
@@ -48,31 +50,22 @@ const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
 const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
 const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
+const WS_HSCROLL = @enumToInt(win32.WS_HSCROLL);
+const WM_CREATE = win32.WM_CREATE;
+const WM_SIZE = win32.WM_SIZE;
+const WM_HSCROLL = win32.WM_HSCROLL;
+const WM_VSCROLL = win32.WM_VSCROLL;
+const WM_PAINT = win32.WM_PAINT;
+const WM_DESTROY = win32.WM_DESTROY;
 
-/// The high-order word of lparam specifies the new height of the client area.
-fn GET_Y_LPARAM(lparam: win32.LPARAM) i32 {
-    return @as(i32, @truncate(i16, (lparam >> 16) & 0xffff));
-}
-
-fn GET_X_LPARAM(lparam: win32.LPARAM) i32 {
-    return @as(i32, @truncate(i16, lparam & 0xffff));
-}
-
-fn LOWORD_WP(wParam: win32.WPARAM) i16 {
-    return @bitCast(i16, @truncate(u16, wParam & 0xffff));
-}
-
-fn HIWORD_WP(wParam: win32.WPARAM) i16 {
-    return @bitCast(i16, @truncate(u16, (wParam >> 16) & 0xffff));
-}
-
-test "GET_Y_LPARAM test" {
-    const assert = std.debug.assert;
-
-    // Pathetic test.
-    const word: win32.LPARAM = 0xefefefe12345867;
-    assert(GET_Y_LPARAM(word) == 0x1234);
-}
+const windowsx = @import("windowsx").windowsx;
+const GetStockBrush = windowsx.GetStockBrush;
+const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
+const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
+const HANDLE_WM_HSCROLL = windowsx.HANDLE_WM_HSCROLL;
+const HANDLE_WM_VSCROLL = windowsx.HANDLE_WM_VSCROLL;
+const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
+const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
@@ -116,7 +109,7 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Get System Metrics No. 3"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL),
+        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL | WS_HSCROLL),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
@@ -158,236 +151,242 @@ pub export fn wWinMain(
     return @bitCast(c_int, @truncate(c_uint, msg.wParam)); // WM_QUIT
 }
 
+const Handler = struct {
+    caps_width: i32 = undefined,
+    char_width: i32 = undefined,
+    char_height: i32 = undefined,
+    client_width: i32 = undefined,
+    client_height: i32 = undefined,
+    max_column_width: i32 = undefined,
+    const num_lines = @intCast(i32, sysmetrics.len);
+
+    pub fn OnCreate(self: *Handler, hwnd: HWND, _: *CREATESTRUCT) LRESULT {
+        {
+            const hdc = win32.GetDC(hwnd);
+            defer {
+                _ = win32.ReleaseDC(hwnd, hdc);
+            }
+
+            var tm: win32.TEXTMETRIC = undefined;
+            _ = win32.GetTextMetrics(hdc, &tm);
+            self.char_width = tm.tmAveCharWidth;
+            const factor: i32 = if (tm.tmPitchAndFamily & 1 != 0) 3 else 2;
+            self.caps_width = @divTrunc(factor * self.char_width, 2);
+            self.char_height = tm.tmHeight + tm.tmExternalLeading;
+        }
+
+        // Save the width of the three columns
+
+        self.max_column_width = 40 * self.char_width + 22 * self.caps_width;
+
+        return 0;
+    }
+
+    pub fn OnSize(self: *Handler, hwnd: HWND, _: u32, cx: i32, cy: i32) void {
+        self.client_width = cx;
+        self.client_height = cy;
+        std.debug.print("{d} {d}\n", .{ cx, cy });
+
+        // Set vertical scroll bar range and page size
+        {
+            var si = SCROLLINFO{
+                .cbSize = @sizeOf(SCROLLINFO),
+                .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
+                .nMin = 0,
+                .nMax = num_lines - 1,
+                .nPage = @intCast(u32, @divTrunc(self.client_height, self.char_height)),
+                .nPos = undefined,
+                .nTrackPos = undefined,
+            };
+            _ = win32.SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+        }
+
+        // Set horizontal scroll bar range and page size
+        {
+            var si = SCROLLINFO{
+                .cbSize = @sizeOf(SCROLLINFO),
+                .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
+                .nMin = 0,
+                .nMax = 2 + @divTrunc(self.max_column_width, self.char_width),
+                .nPage = @intCast(u32, @divTrunc(self.client_width, self.char_width)),
+                .nPos = undefined,
+                .nTrackPos = undefined,
+            };
+            _ = win32.SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
+        }
+    }
+
+    pub fn OnVScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u32, _: i32) void {
+        // Get all the vertical scroll bar information
+        var si = SCROLLINFO{
+            .cbSize = @sizeOf(SCROLLINFO),
+            .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
+            .nMin = undefined,
+            .nMax = undefined,
+            .nPage = undefined,
+            .nPos = undefined,
+            .nTrackPos = undefined,
+        };
+        _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
+
+        // Save the position for comparison later on
+
+        const iVertPos = si.nPos;
+
+        switch (code) {
+            win32.SB_TOP => si.nPos = si.nMin,
+            win32.SB_BOTTOM => si.nPos = si.nMax,
+            win32.SB_LINEUP => si.nPos -= 1,
+            win32.SB_LINEDOWN => si.nPos += 1,
+            win32.SB_PAGEUP => si.nPos -= @intCast(i32, si.nPage),
+            win32.SB_PAGEDOWN => si.nPos += @intCast(i32, si.nPage),
+            win32.SB_THUMBTRACK => si.nPos = si.nTrackPos,
+            else => {},
+        }
+
+        // Set the position and then retrieve it.  Due to adjustments
+        //   by Windows it may not be the same as the value set.
+
+        si.fMask = SIF_POS;
+        _ = win32.SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+        _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
+
+        // If the position has changed, scroll the window and update it
+
+        if (si.nPos != iVertPos) {
+            _ = win32.ScrollWindow(hwnd, 0, self.char_height * (iVertPos - si.nPos), null, null);
+            _ = win32.UpdateWindow(hwnd);
+        }
+    }
+
+    pub fn OnHScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u32, _: i32) void {
+        // Get all the horizontal scroll bar information
+        var si = SCROLLINFO{
+            .cbSize = @sizeOf(SCROLLINFO),
+            .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
+            .nMin = undefined,
+            .nMax = undefined,
+            .nPage = undefined,
+            .nPos = undefined,
+            .nTrackPos = undefined,
+        };
+
+        // Save the position for comparison later on
+
+        _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
+        var iHorzPos = si.nPos;
+
+        switch (code) {
+            win32.SB_LINELEFT => si.nPos -= 1,
+            win32.SB_LINERIGHT => si.nPos += 1,
+            win32.SB_PAGELEFT => si.nPos -= @intCast(i32, si.nPage),
+            win32.SB_PAGERIGHT => si.nPos += @intCast(i32, si.nPage),
+            win32.SB_THUMBPOSITION => si.nPos = si.nTrackPos,
+            else => {},
+        }
+
+        // Set the position and then retrieve it.  Due to adjustments
+        //   by Windows it may not be the same as the value set.
+
+        si.fMask = SIF_POS;
+        _ = win32.SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
+        _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
+
+        // If the position has changed, scroll the window
+
+        if (si.nPos != iHorzPos) {
+            _ = win32.ScrollWindow(hwnd, self.char_width * (iHorzPos - si.nPos), 0, null, null);
+        }
+    }
+
+    pub fn OnPaint(self: *Handler, hwnd: HWND) void {
+        var ps: win32.PAINTSTRUCT = undefined;
+        const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
+        defer {
+            _ = win32.EndPaint(hwnd, &ps);
+        }
+
+        var si = SCROLLINFO{
+            .cbSize = @sizeOf(SCROLLINFO),
+            .fMask = SCROLLINFO_MASK.initFlags(.{ .POS = 1 }),
+            .nMin = undefined,
+            .nMax = undefined,
+            .nPage = undefined,
+            .nPos = undefined,
+            .nTrackPos = undefined,
+        };
+
+        // Get vertical scroll bar position
+        _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
+        const iVertPos = si.nPos;
+
+        // Get horizontal scroll bar position
+        _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
+        const iHorzPos = si.nPos;
+
+        // Find painting limits
+        const iPaintBeg = @maximum(0, iVertPos + @divTrunc(ps.rcPaint.top, self.char_height));
+        const iPaintEnd = @minimum(num_lines - 1, iVertPos + @divTrunc(ps.rcPaint.bottom, self.char_height));
+
+        // This is expensive and should ideally only occur once per execution.
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        defer _ = gpa.deinit();
+        const allocator = gpa.allocator();
+
+        var i = iPaintBeg;
+        while (i <= iPaintEnd) : (i += 1) {
+            const metric = sysmetrics[@intCast(usize, i)];
+
+            const x = self.char_width * (1 - iHorzPos);
+            const y = self.char_height * (i - iVertPos);
+
+            const label = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.label) catch unreachable;
+            const description = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.description) catch unreachable;
+            defer {
+                allocator.free(label);
+                allocator.free(description);
+            }
+
+            const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
+            _ = win32.SetTextAlign(hdc, flagsL);
+
+            // As text is ASCII length of string is number of characters.
+            _ = win32.TextOut(hdc, x, y, label, @intCast(i32, label.len));
+            _ = win32.TextOut(hdc, x + 22 * self.caps_width, y, description, @intCast(i32, description.len));
+
+            const temp = std.fmt.allocPrint(allocator, "{d}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
+            const index = std.unicode.utf8ToUtf16LeWithNull(allocator, temp) catch unreachable;
+            const index_length = @intCast(i32, temp.len); // ASCII, so Ok
+            allocator.free(temp);
+            defer allocator.free(index);
+
+            const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
+            _ = win32.SetTextAlign(hdc, flagsR);
+
+            _ = win32.TextOut(hdc, x + 22 * self.caps_width + 40 * self.char_width, y, index, index_length);
+        }
+    }
+
+    pub fn OnDestroy(_: *Handler, _: HWND) void {
+        win32.PostQuitMessage(0);
+    }
+};
+
+var handler = Handler{};
+
 fn WndProc(
     hwnd: HWND,
     message: u32,
-    wParam: win32.WPARAM,
-    lParam: win32.LPARAM,
-) callconv(WINAPI) win32.LRESULT {
-    const state = struct {
-        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        var cxChar: i32 = undefined;
-        var cxCaps: i32 = undefined;
-        var cyChar: i32 = undefined;
-        var cyClient: i32 = undefined;
-        var cxClient: i32 = undefined;
-        var iMaxWidth: i32 = undefined;
-    };
-    const num_lines = @intCast(i32, sysmetrics.len);
-
+    wParam: WPARAM,
+    lParam: LPARAM,
+) callconv(WINAPI) LRESULT {
     switch (message) {
-        win32.WM_CREATE => {
-            {
-                const hdc = win32.GetDC(hwnd);
-                defer {
-                    _ = win32.ReleaseDC(hwnd, hdc);
-                }
-
-                var tm: win32.TEXTMETRIC = undefined;
-                _ = win32.GetTextMetrics(hdc, &tm);
-                state.cxChar = tm.tmAveCharWidth;
-                const factor: i32 = if (tm.tmPitchAndFamily & 1 != 0) 3 else 2;
-                state.cxCaps = @divTrunc(factor * state.cxChar, 2);
-                state.cyChar = tm.tmHeight + tm.tmExternalLeading;
-            }
-
-            // Save the width of the three columns
-
-            state.iMaxWidth = 40 * state.cxChar + 22 * state.cxCaps;
-
-            return 0;
-        },
-
-        win32.WM_SIZE => {
-            state.cxClient = GET_X_LPARAM(lParam);
-            state.cyClient = GET_Y_LPARAM(lParam);
-
-            // Set vertical scroll bar range and page size
-            {
-                var si = SCROLLINFO{
-                    .cbSize = @sizeOf(SCROLLINFO),
-                    .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
-                    .nMin = 0,
-                    .nMax = num_lines - 1,
-                    .nPage = @intCast(u32, @divTrunc(state.cyClient, state.cyChar)),
-                    .nPos = undefined,
-                    .nTrackPos = undefined,
-                };
-                _ = win32.SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-            }
-
-            // Set horizontal scroll bar range and page size
-            {
-                var si = SCROLLINFO{
-                    .cbSize = @sizeOf(SCROLLINFO),
-                    .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
-                    .nMin = 0,
-                    .nMax = 2 + @divTrunc(state.iMaxWidth, state.cxChar),
-                    .nPage = @intCast(u32, @divTrunc(state.cxClient, state.cxChar)),
-                    .nPos = undefined,
-                    .nTrackPos = undefined,
-                };
-                _ = win32.SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
-            }
-            return 0;
-        },
-
-        win32.WM_VSCROLL => {
-            // Get all the vertial scroll bar information
-            var si = SCROLLINFO{
-                .cbSize = @sizeOf(SCROLLINFO),
-                .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
-                .nMin = undefined,
-                .nMax = undefined,
-                .nPage = undefined,
-                .nPos = undefined,
-                .nTrackPos = undefined,
-            };
-            _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
-
-            // Save the position for comparison later on
-
-            const iVertPos = si.nPos;
-
-            switch (LOWORD_WP(wParam)) {
-                win32.SB_TOP => si.nPos = si.nMin,
-                win32.SB_BOTTOM => si.nPos = si.nMax,
-                win32.SB_LINEUP => si.nPos -= 1,
-                win32.SB_LINEDOWN => si.nPos += 1,
-                win32.SB_PAGEUP => si.nPos -= @intCast(i32, si.nPage),
-                win32.SB_PAGEDOWN => si.nPos += @intCast(i32, si.nPage),
-                win32.SB_THUMBTRACK => si.nPos = si.nTrackPos,
-                else => {},
-            }
-
-            // Set the position and then retrieve it.  Due to adjustments
-            //   by Windows it may not be the same as the value set.
-
-            si.fMask = SIF_POS;
-            _ = win32.SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-            _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
-
-            // If the position has changed, scroll the window and update it
-
-            if (si.nPos != iVertPos) {
-                _ = win32.ScrollWindow(hwnd, 0, state.cyChar * (iVertPos - si.nPos), null, null);
-                _ = win32.UpdateWindow(hwnd);
-            }
-            return 0;
-        },
-
-        win32.WM_HSCROLL => {
-            // Get all the vertial scroll bar information
-            var si = SCROLLINFO{
-                .cbSize = @sizeOf(SCROLLINFO),
-                .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
-                .nMin = undefined,
-                .nMax = undefined,
-                .nPage = undefined,
-                .nPos = undefined,
-                .nTrackPos = undefined,
-            };
-
-            // Save the position for comparison later on
-
-            _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
-            var iHorzPos = si.nPos;
-
-            switch (LOWORD_WP(wParam)) {
-                win32.SB_LINELEFT => si.nPos -= 1,
-                win32.SB_LINERIGHT => si.nPos += 1,
-                win32.SB_PAGELEFT => si.nPos -= @intCast(i32, si.nPage),
-                win32.SB_PAGERIGHT => si.nPos += @intCast(i32, si.nPage),
-                win32.SB_THUMBPOSITION => si.nPos = si.nTrackPos,
-                else => {},
-            }
-
-            // Set the position and then retrieve it.  Due to adjustments
-            //   by Windows it may not be the same as the value set.
-
-            si.fMask = SIF_POS;
-            _ = win32.SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
-            _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
-
-            // If the position has changed, scroll the window
-
-            if (si.nPos != iHorzPos) {
-                _ = win32.ScrollWindow(hwnd, state.cxChar * (iHorzPos - si.nPos), 0, null, null);
-            }
-            return 0;
-        },
-
-        win32.WM_PAINT => {
-            var ps: win32.PAINTSTRUCT = undefined;
-            const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
-            defer {
-                _ = win32.EndPaint(hwnd, &ps);
-            }
-
-            var si = SCROLLINFO{
-                .cbSize = @sizeOf(SCROLLINFO),
-                .fMask = SCROLLINFO_MASK.initFlags(.{ .POS = 1 }),
-                .nMin = undefined,
-                .nMax = undefined,
-                .nPage = undefined,
-                .nPos = undefined,
-                .nTrackPos = undefined,
-            };
-
-            // Get vertical scroll bar position
-            _ = win32.GetScrollInfo(hwnd, SB_VERT, &si);
-            const iVertPos = si.nPos;
-
-            // Get horizontal scroll bar position
-            _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
-            const iHorzPos = si.nPos;
-
-            // Find painting limits
-            const iPaintBeg = @maximum(0, iVertPos + @divTrunc(ps.rcPaint.top, state.cyChar));
-            const iPaintEnd = @minimum(num_lines - 1, iVertPos + @divTrunc(ps.rcPaint.bottom, state.cyChar));
-
-            const allocator = state.gpa.allocator();
-
-            var i = iPaintBeg;
-            while (i <= iPaintEnd) : (i += 1) {
-                const metric = sysmetrics[@intCast(usize, i)];
-
-                const x = state.cxChar * (1 - iHorzPos);
-                const y = state.cyChar * (i - iVertPos);
-
-                const label = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.label) catch unreachable;
-                const description = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.description) catch unreachable;
-                defer {
-                    allocator.free(label);
-                    allocator.free(description);
-                }
-
-                const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
-                _ = win32.SetTextAlign(hdc, flagsL);
-
-                // As text is ASCII length of string is number of characters.
-                _ = win32.TextOut(hdc, x, y, label, @intCast(i32, label.len));
-                _ = win32.TextOut(hdc, x + 22 * state.cxCaps, y, description, @intCast(i32, description.len));
-
-                const temp = std.fmt.allocPrint(allocator, "{d}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
-                const index = std.unicode.utf8ToUtf16LeWithNull(allocator, temp) catch unreachable;
-                const index_length = @intCast(i32, temp.len); // ASCII, so Ok
-                allocator.free(temp);
-                defer allocator.free(index);
-
-                const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
-                _ = win32.SetTextAlign(hdc, flagsR);
-
-                _ = win32.TextOut(hdc, x + 22 * state.cxCaps + 40 * state.cxChar, y, index, index_length);
-            }
-
-            return 0; // message processed
-        },
-
-        win32.WM_DESTROY => {
-            win32.PostQuitMessage(0);
-            return 0; // message processed
-        },
+        WM_CREATE => return HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
+        WM_SIZE => return HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
+        WM_HSCROLL => return HANDLE_WM_HSCROLL(hwnd, wParam, lParam, Handler, &handler),
+        WM_VSCROLL => return HANDLE_WM_VSCROLL(hwnd, wParam, lParam, Handler, &handler),
+        WM_PAINT => return HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
+        WM_DESTROY => return HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
         else => return win32.DefWindowProc(hwnd, message, wParam, lParam),
     }
 }
