@@ -40,10 +40,6 @@ fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?win32.HBRUSH {
     return @as(?win32.HBRUSH, win32.GetStockObject(hbrush));
 }
 
-fn MakeDWord(lo: u16, hi: u16) u32 {
-    return @as(u32, lo) | (@as(u32, hi) << 16);
-}
-
 pub export fn wWinMain(
     hInstance: HINSTANCE,
     _: ?HINSTANCE,
@@ -79,7 +75,7 @@ pub export fn wWinMain(
     //   lpClassName: ?[*:0]align(1) const u16,
     //                      ^^^^^^^^
     // https://github.com/marlersoft/zigwin32gen/issues/9
-    const lpClassName = @intToPtr([*:0]align(1) const u16, MakeDWord(atom, 0));
+    const lpClassName = @intToPtr([*:0]align(1) const u16, atom);
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
