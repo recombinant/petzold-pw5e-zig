@@ -16,10 +16,19 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.install();
-    exe.addPackage(.{
+
+    const pkg1 = std.build.Pkg{
         .name = "win32",
         .path = .{ .path = "../../zigwin32/win32.zig" },
-    });    
+    };
+    const pkg2 = std.build.Pkg{
+        .name = "windowsx",
+        .path = .{ .path = "../../windowsx/windowsx.zig" },
+        .dependencies = &[_]std.build.Pkg{pkg1},
+    };
+
+    exe.addPackage(pkg1);
+    exe.addPackage(pkg2);
 
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());

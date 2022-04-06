@@ -22,6 +22,11 @@ pub fn build(b: *std.build.Builder) void {
         .path = .{ .path = "../../zigwin32/win32.zig" },
     };
     const pkg2 = std.build.Pkg{
+        .name = "windowsx",
+        .path = .{ .path = "../../windowsx/windowsx.zig" },
+        .dependencies = &[_]std.build.Pkg{pkg1},
+    };
+    const pkg3 = std.build.Pkg{
         .name = "sysmets",
         .path = .{ .path = "../01 SysMets1/SysMets.zig" },
         .dependencies = &[_]std.build.Pkg{pkg1},
@@ -29,6 +34,7 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.addPackage(pkg1);
     exe.addPackage(pkg2);
+    exe.addPackage(pkg3);
 
     // ----------------------------------------------------
 

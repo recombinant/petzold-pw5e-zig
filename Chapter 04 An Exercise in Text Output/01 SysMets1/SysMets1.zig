@@ -13,6 +13,8 @@ pub const UNICODE = true;
 
 const std = @import("std");
 
+const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
+
 const WINAPI = std.os.windows.WINAPI;
 
 const sysmetrics = @import("SysMets.zig").sysmetrics;
@@ -35,10 +37,6 @@ const TA_LEFT = @enumToInt(win32.TA_LEFT);
 const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
 const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
-
-fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?win32.HBRUSH {
-    return @as(?win32.HBRUSH, win32.GetStockObject(hbrush));
-}
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,

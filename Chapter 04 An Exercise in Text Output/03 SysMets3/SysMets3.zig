@@ -15,6 +15,8 @@ const std = @import("std");
 
 const WINAPI = std.os.windows.WINAPI;
 
+const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
+
 const sysmetrics = @import("sysmets").sysmetrics;
 
 const win32 = struct {
@@ -46,10 +48,6 @@ const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
 const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
 const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
-
-fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?win32.HBRUSH {
-    return @as(?win32.HBRUSH, win32.GetStockObject(hbrush));
-}
 
 /// The high-order word of lparam specifies the new height of the client area.
 fn GET_Y_LPARAM(lparam: win32.LPARAM) i32 {
@@ -303,7 +301,7 @@ fn WndProc(
                 win32.SB_THUMBPOSITION => si.nPos = si.nTrackPos,
                 else => {},
             }
-            
+
             // Set the position and then retrieve it.  Due to adjustments
             //   by Windows it may not be the same as the value set.
 
