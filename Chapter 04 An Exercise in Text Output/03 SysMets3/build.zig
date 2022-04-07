@@ -49,7 +49,7 @@ pub fn build(b: *std.build.Builder) void {
 
     // ----------------------------------------------------
 
-    const exe_tests = b.addTest("SysMets2.zig");
+    const exe_tests = b.addTest("SysMets3.zig");
     exe_tests.setTarget(target);
     exe_tests.setBuildMode(mode);
     exe_tests.addPackage(pkg1);
