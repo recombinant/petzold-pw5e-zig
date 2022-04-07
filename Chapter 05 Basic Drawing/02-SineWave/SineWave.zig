@@ -1,7 +1,7 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 5 - DevCap1
+// Chapter 5 - SineWave
 //
 // The original source code copyright:
 //
@@ -154,7 +154,7 @@ const Handler = struct {
         _ = win32.MoveToEx(hdc, 0, @divTrunc(self.client_height, 2), null);
         _ = win32.LineTo(hdc, self.client_width, @divTrunc(self.client_height, 2));
 
-        var idx: usize = 0; 
+        var idx: usize = 0;
         var i: i32 = 0;
         while (i < NUM) : ({
             idx += 1;
@@ -175,12 +175,7 @@ const Handler = struct {
 
 var handler = Handler{};
 
-fn WndProc(
-    hwnd: HWND,
-    message: u32,
-    wParam: WPARAM,
-    lParam: LPARAM,
-) callconv(WINAPI) LRESULT {
+fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
     switch (message) {
         WM_SIZE => return HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
         WM_PAINT => return HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
