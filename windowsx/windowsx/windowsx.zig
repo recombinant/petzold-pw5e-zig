@@ -13,16 +13,31 @@ const LRESULT = win32.LRESULT;
 const HDC = win32.HDC;
 const HGDIOBJ = win32.HGDIOBJ;
 const HBRUSH = win32.HBRUSH;
+const HPEN = win32.HPEN;
 const CREATESTRUCT = win32.CREATESTRUCT;
 
-pub fn DeleteBrush(hbr: HBRUSH) BOOL {
-    return win32.DeleteObject(@as(HGDIOBJ, hbr));
+pub fn DeletePen(hbr: ?HPEN) BOOL {
+    return win32.DeleteObject(@as(?HGDIOBJ, hbr));
 }
 
-pub fn SelectBrush(hdc: HDC, hbr: HBRUSH) ?HBRUSH {
+pub fn SelectPen(hdc: ?HDC, hbr: ?HPEN) ?HPEN {
     // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-selectobject#return-value
     // TODO: HGDI_ERROR is a third possible return alternative.
-    return @as(?HBRUSH, win32.SelectObject(hdc, @as(HGDIOBJ, hbr)));
+    return @as(?HPEN, win32.SelectObject(hdc, @as(?HGDIOBJ, hbr)));
+}
+
+pub fn GetStockPen(hpen: win32.GET_STOCK_OBJECT_FLAGS) ?HPEN {
+    return @as(?HPEN, win32.GetStockObject(hpen));
+}
+
+pub fn DeleteBrush(hbr: ?HBRUSH) BOOL {
+    return win32.DeleteObject(@as(?HGDIOBJ, hbr));
+}
+
+pub fn SelectBrush(hdc: ?HDC, hbr: ?HBRUSH) ?HBRUSH {
+    // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-selectobject#return-value
+    // TODO: HGDI_ERROR is a third possible return alternative.
+    return @as(?HBRUSH, win32.SelectObject(hdc, @as(?HGDIOBJ, hbr)));
 }
 
 pub fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?HBRUSH {
