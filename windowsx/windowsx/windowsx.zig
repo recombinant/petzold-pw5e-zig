@@ -1,4 +1,4 @@
-//
+// Message Crackers as per the original windowsx.h
 const win32 = struct {
     usingnamespace @import("win32").foundation;
     usingnamespace @import("win32").graphics.gdi;
@@ -28,11 +28,13 @@ pub fn GetStockBrush(hbrush: win32.GET_STOCK_OBJECT_FLAGS) ?HBRUSH {
     return @as(?HBRUSH, win32.GetStockObject(hbrush));
 }
 
+// pub fn OnCreate(self: *T, hwnd: HWND, cs: *CREATESTRUCT) LRESULT
 pub fn HANDLE_WM_CREATE(hwnd: HWND, _: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
-    const ptr: *CREATESTRUCT = @intToPtr(*CREATESTRUCT, @bitCast(WPARAM, lParam));
+    const ptr: *CREATESTRUCT = @intToPtr(*CREATESTRUCT, @bitCast(usize, lParam));
     return if (handler.OnCreate(hwnd, ptr) == 0) 0 else -1;
 }
 
+// pub fn OnSize(self: *T, hwnd: HWND, state: u32, cx: i32, cy: i32) void
 pub fn HANDLE_WM_SIZE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
     const state = @truncate(u32, wParam);
     const cx: i32 = @truncate(i16, lParam);
@@ -41,6 +43,7 @@ pub fn HANDLE_WM_SIZE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: ty
     return 0;
 }
 
+// pub fn OnHScroll(self: *T, hwnd: HWND, hwndCtrl: ?HWND, code: u32, pos: i32) void
 pub fn HANDLE_WM_HSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
     const hwndCtrl = @intToPtr(?HWND, @bitCast(usize, lParam));
     const code: u32 = @truncate(u16, wParam);
@@ -49,6 +52,7 @@ pub fn HANDLE_WM_HSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T:
     return 0;
 }
 
+// pub fn OnVScroll(self: *T, hwnd: HWND, hwndCtrl: ?HWND, code: u32, pos: i32) void
 pub fn HANDLE_WM_VSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
     const hwndCtrl = @intToPtr(?HWND, @bitCast(usize, lParam));
     const code: u32 = @truncate(u16, wParam);
@@ -57,11 +61,13 @@ pub fn HANDLE_WM_VSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T:
     return 0;
 }
 
+// pub fn OnPaint(self: *T, hwnd: HWND) void
 pub fn HANDLE_WM_PAINT(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
     handler.OnPaint(hwnd);
     return 0;
 }
 
+// pub fn OnDestroy(self: *T, hwnd: HWND) void
 pub fn HANDLE_WM_DESTROY(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
     handler.OnDestroy(hwnd);
     return 0;
