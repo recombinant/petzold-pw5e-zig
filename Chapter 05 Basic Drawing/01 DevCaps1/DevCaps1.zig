@@ -183,7 +183,9 @@ const Handler = struct {
 
     pub fn OnPaint(self: *Handler, hwnd: HWND) void {
         var ps: win32.PAINTSTRUCT = undefined;
+
         const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
+        defer _ = win32.EndPaint(hwnd, &ps);
 
         // The strings are ASCII so the buffer size required will be the string length.
         const sizes = comptime blk: {
@@ -235,7 +237,6 @@ const Handler = struct {
 
             i += 1;
         }
-        defer _ = win32.EndPaint(hwnd, &ps);
     }
 
     pub fn OnDestroy(_: *Handler, _: HWND) void {
