@@ -75,7 +75,7 @@ pub export fn wWinMain(
 ) callconv(WINAPI) c_int {
     _ = pCmdLine;
 
-    const app_name = L("SysMets2");
+    const app_name = L("SysMets3");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
         .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
