@@ -16,3 +16,4 @@ Notes
 - https://github.com/marlersoft/zigwin32gen/issues/9 causes occasional memory align panics with CreateWindowExW and other functions. To fix align(1) needs to be added to the offending parameter in the zigwin32 declarations.
   - `CreateWindowExW()`, `CreateWindowExA()`
 - `TextOutW()`, `TextOutA()` the `lpString` parameter does not need to be zero terminated.
+- `IDC_ARROW` is present in zigwin32, but `IDC_WAIT` and others have been skipped.
