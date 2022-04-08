@@ -18,6 +18,8 @@ const WINAPI = std.os.windows.WINAPI;
 const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
 
 const sysmetrics = @import("sysmets").sysmetrics;
+const buffer_sizes = @import("sysmets").buffer_sizes;
+const num_lines = @import("sysmets").num_lines;
 
 const win32 = struct {
     usingnamespace @import("win32").zig;
@@ -164,7 +166,6 @@ fn WndProc(
         var cyClient: i32 = undefined;
         var iVscrollPos: i32 = undefined;
     };
-    const num_lines = @intCast(i32, sysmetrics.len);
 
     switch (message) {
         win32.WM_CREATE => {
@@ -220,36 +221,38 @@ fn WndProc(
                 _ = win32.EndPaint(hwnd, &ps);
             }
 
-            const allocator = state.gpa.allocator();
+            const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
+            const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
 
             var i: i32 = 0;
             for (sysmetrics) |metric| {
                 const y: i32 = state.cyChar * (i - state.iVscrollPos);
 
-                const label = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.label) catch unreachable;
-                const description = std.unicode.utf8ToUtf16LeWithNull(allocator, metric.description) catch unreachable;
-                defer {
-                    allocator.free(label);
-                    allocator.free(description);
-                }
+                // Convert text to Windows UTF16
 
-                const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
+                var label: [buffer_sizes.label]u16 = [_]u16{0} ** buffer_sizes.label;
+                var label_len: i32 = @intCast(i32, std.unicode.utf8ToUtf16Le(label[0..], metric.label) catch unreachable);
+
+                var description: [buffer_sizes.description]u16 = [_]u16{0} ** buffer_sizes.description;
+                var description_len = @intCast(i32, std.unicode.utf8ToUtf16Le(description[0..], metric.description) catch unreachable);
+
+                var buffer2: [6]u8 = [_]u8{0} ** 6;
+                _ = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
+
+                var index: [6]u16 = [_]u16{0} ** 6;
+                var index_len = @intCast(i32, std.unicode.utf8ToUtf16Le(index[0..], &buffer2) catch unreachable);
+
+                // Output text
+
                 _ = win32.SetTextAlign(hdc, flagsL);
 
                 // As text is ASCII length of string is number of characters.
-                _ = win32.TextOut(hdc, 0, y, label, @intCast(i32, label.len));
-                _ = win32.TextOut(hdc, 22 * state.cxCaps, y, description, @intCast(i32, description.len));
+                _ = win32.TextOut(hdc, 0, y, &label, label_len);
+                _ = win32.TextOut(hdc, 22 * state.cxCaps, y, &description, description_len);
 
-                const temp = std.fmt.allocPrint(allocator, "{d}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
-                const index = std.unicode.utf8ToUtf16LeWithNull(allocator, temp) catch unreachable;
-                const index_length = @intCast(i32, temp.len); // ASCII, so Ok
-                allocator.free(temp);
-                defer allocator.free(index);
-
-                const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
                 _ = win32.SetTextAlign(hdc, flagsR);
 
-                _ = win32.TextOut(hdc, 22 * state.cxCaps + 40 * state.cxChar, y, index, index_length);
+                _ = win32.TextOut(hdc, 22 * state.cxCaps + 40 * state.cxChar, y, &index, index_len);
 
                 i += 1;
             }

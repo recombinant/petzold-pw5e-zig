@@ -92,3 +92,20 @@ pub const sysmetrics = [_]SystemMetrics{
     .{ .index = win32.SM_CMONITORS, .label = "SM_CMONITORS", .description = "Number of monitors" },
     .{ .index = win32.SM_SAMEDISPLAYFORMAT, .label = "SM_SAMEDISPLAYFORMAT", .description = "Same color format flag" },
 };
+
+// Precompute maximum buffer sizes.
+// The strings are ASCII so the buffer size required will be the string length.
+pub const buffer_sizes = blk: {
+    var label_size: usize = 0;
+    var description_size: usize = 0;
+    for (sysmetrics) |metric| {
+        label_size = @maximum(label_size, metric.label.len);
+        description_size = @maximum(description_size, metric.description.len);
+    }
+    break :blk .{
+        .label = label_size + 1,
+        .description = description_size + 1,
+    };
+};
+
+pub const num_lines = @intCast(i32, sysmetrics.len);

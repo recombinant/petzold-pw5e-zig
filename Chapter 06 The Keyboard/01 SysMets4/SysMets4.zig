@@ -16,6 +16,8 @@ const std = @import("std");
 const WINAPI = std.os.windows.WINAPI;
 
 const sysmetrics = @import("sysmets").sysmetrics;
+const buffer_sizes = @import("sysmets").buffer_sizes;
+const num_lines = @import("sysmets").num_lines;
 
 const win32 = struct {
     usingnamespace @import("win32").zig;
@@ -176,7 +178,6 @@ const Handler = struct {
     cxClient: i32 = undefined,
     cyClient: i32 = undefined,
     max_column_width: i32 = undefined,
-    const num_lines = @intCast(i32, sysmetrics.len);
 
     pub fn OnCreate(self: *Handler, hwnd: HWND, _: *CREATESTRUCT) LRESULT {
         {
@@ -359,21 +360,6 @@ const Handler = struct {
         const iPaintBeg = @maximum(0, iVertPos + @divTrunc(ps.rcPaint.top, self.cyChar));
         const iPaintEnd = @minimum(num_lines - 1, iVertPos + @divTrunc(ps.rcPaint.bottom, self.cyChar));
 
-        // Precompute maximum buffer sizes.
-        // The strings are ASCII so the buffer size required will be the string length.
-        const sizes = comptime blk: {
-            var label_size: usize = 0;
-            var description_size: usize = 0;
-            for (sysmetrics) |metric| {
-                label_size = @maximum(label_size, metric.label.len);
-                description_size = @maximum(description_size, metric.description.len);
-            }
-            break :blk .{
-                .label = label_size + 1,
-                .description = description_size + 1,
-            };
-        };
-
         const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
         const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
 
@@ -386,10 +372,10 @@ const Handler = struct {
 
             // Convert text to Windows UTF16
 
-            var label: [sizes.label]u16 = [_]u16{0} ** sizes.label;
+            var label: [buffer_sizes.label]u16 = [_]u16{0} ** buffer_sizes.label;
             var label_len: i32 = @intCast(i32, std.unicode.utf8ToUtf16Le(label[0..], metric.label) catch unreachable);
 
-            var description: [sizes.description]u16 = [_]u16{0} ** sizes.description;
+            var description: [buffer_sizes.description]u16 = [_]u16{0} ** buffer_sizes.description;
             var description_len = @intCast(i32, std.unicode.utf8ToUtf16Le(description[0..], metric.description) catch unreachable);
 
             var buffer2: [6]u8 = [_]u8{0} ** 6;
