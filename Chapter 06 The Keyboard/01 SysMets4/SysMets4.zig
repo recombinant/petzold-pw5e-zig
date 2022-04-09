@@ -76,6 +76,7 @@ const WM_VSCROLL = win32.WM_VSCROLL;
 const WM_KEYDOWN = win32.WM_KEYDOWN;
 const WM_PAINT = win32.WM_PAINT;
 const WM_DESTROY = win32.WM_DESTROY;
+const SendMessage = win32.SendMessage;
 
 const windowsx = @import("windowsx").windowsx;
 const GetStockBrush = windowsx.GetStockBrush;
@@ -86,6 +87,8 @@ const HANDLE_WM_VSCROLL = windowsx.HANDLE_WM_VSCROLL;
 const HANDLE_WM_KEYDOWN = windowsx.HANDLE_WM_KEYDOWN;
 const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
 const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
+const FORWARD_WM_VSCROLL = windowsx.FORWARD_WM_VSCROLL;
+const FORWARD_WM_HSCROLL = windowsx.FORWARD_WM_HSCROLL;
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
@@ -317,16 +320,16 @@ const Handler = struct {
         }
     }
 
-    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: BOOL, _: i32, _: u32) void {
+    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i32, _: u32) void {
         switch (vk) {
-            VK_HOME => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_TOP, 0),
-            VK_END => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_BOTTOM, 0),
-            VK_PRIOR => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_PAGEUP, 0),
-            VK_NEXT => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_PAGEDOWN, 0),
-            VK_UP => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_LINEUP, 0),
-            VK_DOWN => _ = win32.SendMessage(hwnd, WM_VSCROLL, SB_LINEDOWN, 0),
-            VK_LEFT => _ = win32.SendMessage(hwnd, WM_HSCROLL, SB_PAGEUP, 0),
-            VK_RIGHT => _ = win32.SendMessage(hwnd, WM_HSCROLL, SB_PAGEDOWN, 0),
+            VK_HOME => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_TOP, 0, SendMessage),
+            VK_END => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_BOTTOM, 0, SendMessage),
+            VK_PRIOR => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_PAGEUP, 0, SendMessage),
+            VK_NEXT => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_PAGEDOWN, 0, SendMessage),
+            VK_UP => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_LINEUP, 0, SendMessage),
+            VK_DOWN => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_LINEDOWN, 0, SendMessage),
+            VK_LEFT => _ = FORWARD_WM_HSCROLL(hwnd, null, SB_PAGEUP, 0, SendMessage),
+            VK_RIGHT => _ = FORWARD_WM_HSCROLL(hwnd, null, SB_PAGEDOWN, 0, SendMessage),
             else => {},
         }
     }
@@ -410,14 +413,14 @@ fn WndProc(
     wParam: WPARAM,
     lParam: LPARAM,
 ) callconv(WINAPI) LRESULT {
-    switch (message) {
-        WM_CREATE => return HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
-        WM_SIZE => return HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
-        WM_HSCROLL => return HANDLE_WM_HSCROLL(hwnd, wParam, lParam, Handler, &handler),
-        WM_VSCROLL => return HANDLE_WM_VSCROLL(hwnd, wParam, lParam, Handler, &handler),
-        WM_KEYDOWN => return HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &handler),
-        WM_PAINT => return HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => return HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
-        else => return win32.DefWindowProc(hwnd, message, wParam, lParam),
-    }
+    return switch (message) {
+        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
+        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
+        WM_HSCROLL => HANDLE_WM_HSCROLL(hwnd, wParam, lParam, Handler, &handler),
+        WM_VSCROLL => HANDLE_WM_VSCROLL(hwnd, wParam, lParam, Handler, &handler),
+        WM_KEYDOWN => HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+    };
 }
