@@ -201,7 +201,7 @@ pub fn HANDLE_WM_HSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T:
 }
 
 pub fn FORWARD_WM_HSCROLL(hwnd: HWND, hwndCtrl: ?HWND, code: u32, pos: i32, forwarder: forwarder_type) void {
-    const wParam = ((@bitCast(u32, pos) & 0xffff) << 16) | code & 0xffff;
+    const wParam = @as(WPARAM, ((@bitCast(u32, pos) & 0xffff) << 16) | (code & 0xffff));
     const lParam = @bitCast(LPARAM, @ptrToInt(hwndCtrl));
     _ = forwarder(hwnd, win32.WM_HSCROLL, wParam, lParam);
 }
@@ -217,7 +217,7 @@ pub fn HANDLE_WM_VSCROLL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T:
 }
 
 pub fn FORWARD_WM_VSCROLL(hwnd: HWND, hwndCtrl: ?HWND, code: u32, pos: i32, forwarder: forwarder_type) void {
-    const wParam = ((@bitCast(u32, pos) & 0xffff) << 16) | code & 0xffff;
+    const wParam = @as(WPARAM, ((@bitCast(u32, pos) & 0xffff) << 16) | (code & 0xffff));
     const lParam = @bitCast(LPARAM, @ptrToInt(hwndCtrl));
     _ = forwarder(hwnd, win32.WM_VSCROLL, wParam, lParam);
 }
