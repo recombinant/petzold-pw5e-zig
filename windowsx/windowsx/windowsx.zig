@@ -140,6 +140,7 @@ pub fn HANDLE_WM_CHAR(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: ty
     const ch = @truncate(TCHAR, wParam);
     const cRepeat = @truncate(i16, lParam);
     handler.OnChar(hwnd, ch, cRepeat);
+    return 0;
 }
 
 // 0x0103 WM_DEADCHAR
