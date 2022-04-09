@@ -204,10 +204,10 @@ const Handler = struct {
 var handler = Handler{};
 
 fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
-    switch (message) {
-        WM_CREATE => return HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
-        WM_PAINT => return HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => return HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
-        else => return win32.DefWindowProc(hwnd, message, wParam, lParam),
-    }
+    return switch (message) {
+        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+    };
 }
