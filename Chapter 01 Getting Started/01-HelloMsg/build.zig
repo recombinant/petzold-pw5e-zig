@@ -19,7 +19,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(.{
         .name = "win32",
         .path = .{ .path = "../../zigwin32/win32.zig" },
-    });    
+    });
 
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());

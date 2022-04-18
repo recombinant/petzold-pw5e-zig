@@ -152,7 +152,7 @@ fn DrawBezier(hdc: ?HDC, apt: [4]POINT) void {
 const Handler = struct {
     apt: [4]POINT = undefined,
 
-    pub fn OnSize(self: *Handler, _: HWND, _: u32, client_width: i32, client_height: i32) void {
+    pub fn OnSize(self: *Handler, _: HWND, _: u32, client_width: i16, client_height: i16) void {
         self.apt = .{
             .{ .x = @divTrunc(client_width, 4), .y = @divTrunc(client_height, 2) },
             .{ .x = @divTrunc(client_width, 2), .y = @divTrunc(client_height, 4) },
@@ -162,7 +162,7 @@ const Handler = struct {
     }
 
     // OnLButtonDown & OnRButtonDown are here...
-    pub fn OnMouseMove(self: *Handler, hwnd: HWND, x: i32, y: i32, keyFlags: u32) void {
+    pub fn OnMouseMove(self: *Handler, hwnd: HWND, x: i16, y: i16, keyFlags: u32) void {
         if (keyFlags & MK_LBUTTON != 0 or keyFlags & MK_RBUTTON != 0) {
             const hdc = win32.GetDC(hwnd);
             defer _ = win32.ReleaseDC(hwnd, hdc);

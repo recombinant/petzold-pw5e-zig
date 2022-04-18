@@ -213,7 +213,7 @@ const Handler = struct {
         return 0;
     }
 
-    pub fn OnSettingChange(self: *Handler, _: HWND, _: win32.SYSTEM_PARAMETERS_INFO_ACTION, _: [*:0]const TCHAR) void {
+    pub fn OnSettingChange(self: *Handler, _: HWND, _: win32.SYSTEM_PARAMETERS_INFO_ACTION, _: ?[*:0]const TCHAR) void {
         self.mousewheelInfo();
     }
 
@@ -235,7 +235,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnSize(self: *Handler, hwnd: HWND, _: u32, cx: i32, cy: i32) void {
+    pub fn OnSize(self: *Handler, hwnd: HWND, _: u32, cx: i16, cy: i16) void {
         self.cxClient = cx;
         self.cyClient = cy;
 
@@ -351,7 +351,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i32, _: u32) void {
+    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i16, _: u16) void {
         switch (vk) {
             VK_HOME => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_TOP, 0, SendMessage),
             VK_END => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_BOTTOM, 0, SendMessage),
@@ -365,7 +365,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnMouseWheel(self: *Handler, hwnd: HWND, _: i32, _: i32, zDelta: i32, _: u32) void {
+    pub fn OnMouseWheel(self: *Handler, hwnd: HWND, _: i16, _: i16, zDelta: i16, _: u16) void {
         if (self.iDeltaPerLine == 0)
             return;
 

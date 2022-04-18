@@ -204,7 +204,7 @@ const Handler = struct {
         return 0;
     }
 
-    pub fn OnSize(self: *Handler, hwnd: HWND, _: u32, cx: i32, cy: i32) void {
+    pub fn OnSize(self: *Handler, hwnd: HWND, _: u32, cx: i16, cy: i16) void {
         self.cxClient = cx;
         self.cyClient = cy;
 
@@ -237,7 +237,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnVScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u32, _: i32) void {
+    pub fn OnVScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u16, _: i16) void {
         // Get all the vertical scroll bar information
         var si = SCROLLINFO{
             .cbSize = @sizeOf(SCROLLINFO),
@@ -280,7 +280,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnHScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u32, _: i32) void {
+    pub fn OnHScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u16, _: i16) void {
         // Get all the horizontal scroll bar information
         var si = SCROLLINFO{
             .cbSize = @sizeOf(SCROLLINFO),
@@ -320,7 +320,7 @@ const Handler = struct {
         }
     }
 
-    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i32, _: u32) void {
+    pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i16, _: u16) void {
         switch (vk) {
             VK_HOME => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_TOP, 0, SendMessage),
             VK_END => _ = FORWARD_WM_VSCROLL(hwnd, null, SB_BOTTOM, 0, SendMessage),

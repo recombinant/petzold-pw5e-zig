@@ -136,7 +136,7 @@ const Handler = struct {
     client_width: i32 = undefined,
     client_height: i32 = undefined,
 
-    pub fn OnSize(self: *Handler, _: HWND, _: u32, cx: i32, cy: i32) void {
+    pub fn OnSize(self: *Handler, _: HWND, _: u32, cx: i16, cy: i16) void {
         self.client_width = cx;
         self.client_height = cy;
     }
