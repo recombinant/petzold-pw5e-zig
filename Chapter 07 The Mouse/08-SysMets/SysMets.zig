@@ -1,14 +1,14 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 7 - SysMets
+// Chapter 8 - SysMets
 //
 // The original source code copyright:
 //
-// ----------------------------------------------------
-//  SYSMETS.C -- System Metrics Display Program No. 4
-//               (c) Charles Petzold, 1998
-// ----------------------------------------------------
+// --------------------------------------------------
+// SYSMETS.C -- Final System Metrics Display Program
+//              (c) Charles Petzold, 1998
+// --------------------------------------------------
 pub const UNICODE = true;
 
 const std = @import("std");
