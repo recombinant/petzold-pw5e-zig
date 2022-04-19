@@ -6,7 +6,7 @@
 // The original source code copyright:
 //
 // -------------------------------------------------
-//  CHECKER1.C -- Mouse Hit-Test Demo Program No. 2
+//  CHECKER2.C -- Mouse Hit-Test Demo Program No. 2
 //                (c) Charles Petzold, 1998
 // -------------------------------------------------
 pub const UNICODE = true;
