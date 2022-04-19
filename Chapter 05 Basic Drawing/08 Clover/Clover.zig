@@ -140,7 +140,11 @@ const Handler = struct {
         self.cxClient = cx;
         self.cyClient = cy;
 
-        const hCursor = win32.SetCursor(win32.LoadCursor(null, win32.IDC_WAIT));
+        const waitCursor = @ptrCast(
+            win32.HCURSOR,
+            win32.LoadImage(null, win32.IDC_WAIT, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        );
+        const previousCursor = win32.SetCursor(waitCursor);
         _ = win32.ShowCursor(TRUE);
 
         if (self.hRgnClip) |hRgn|
@@ -183,7 +187,7 @@ const Handler = struct {
         for (hRgnTemp) |hRgn|
             _ = win32.DeleteObject(hRgn);
 
-        _ = win32.SetCursor(hCursor);
+        _ = win32.SetCursor(previousCursor);
         _ = win32.ShowCursor(FALSE);
     }
 

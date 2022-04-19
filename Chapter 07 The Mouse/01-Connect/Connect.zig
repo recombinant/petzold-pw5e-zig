@@ -191,7 +191,11 @@ const Handler = struct {
         defer {
             _ = win32.EndPaint(hwnd, &ps);
         }
-        const cursor = win32.SetCursor(win32.LoadCursor(null, win32.IDC_WAIT));
+        const waitCursor = @ptrCast(
+            win32.HCURSOR,
+            win32.LoadImage(null, win32.IDC_WAIT, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        );
+        const previousCursor = win32.SetCursor(waitCursor);
         _ = win32.ShowCursor(TRUE);
 
         var i: usize = 0;
@@ -204,7 +208,7 @@ const Handler = struct {
         }
 
         _ = win32.ShowCursor(FALSE);
-        _ = win32.SetCursor(cursor);
+        _ = win32.SetCursor(previousCursor);
     }
 
     pub fn OnDestroy(_: *Handler, _: HWND) void {
