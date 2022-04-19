@@ -112,6 +112,20 @@ pub fn HANDLE_WM_SIZE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: ty
     return 0;
 }
 
+// 0x0007 WM_SETFOCUS
+// pub fn OnSetFocus(self: *T,  hwnd: HWND, hwndOldFocus: ?HWND) void
+pub fn HANDLE_WM_SETFOCUS(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
+    handler.OnSetFocus(hwnd, @intToPtr(?HWND, wParam));
+    return 0;
+}
+
+// 0x0008 WM_KILLFOCUS
+// pub fn OnKillFocus(self: *T,  hwnd: HWND, hwndNewFocus: ?HWND) void
+pub fn HANDLE_WM_KILLFOCUS(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
+    handler.OnKillFocus(hwnd, @intToPtr(?HWND, wParam));
+    return 0;
+}
+
 // 0x000f WM_PAINT
 // pub fn OnPaint(self: *T, hwnd: HWND) void
 pub fn HANDLE_WM_PAINT(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -303,6 +317,14 @@ pub fn HANDLE_WM_MOUSEMOVE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime 
     return 0;
 }
 
+pub fn FORWARD_WM_MOUSEMOVE(hwnd: HWND, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_MOUSEMOVE, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0201 WM_LBUTTONDOWN
 // pub fn OnLButtonDown(self: *T, hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32) void
 pub fn HANDLE_WM_LBUTTONDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -312,6 +334,15 @@ pub fn HANDLE_WM_LBUTTONDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptim
     return 0;
 }
 
+pub fn FORWARD_WM_LBUTTONDOWN(hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    const msg = if (fDoubleClick) win32.WM_LBUTTONDBLCLK else win32.WM_LBUTTONDOWN;
+    _ = forwarder(hwnd, msg, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0202 WM_LBUTTONUP
 // pub fn OnLButtonUp(self: *T, hwnd: HWND, x: i16, y: i16, keyFlags: u32) void
 pub fn HANDLE_WM_LBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -319,6 +350,14 @@ pub fn HANDLE_WM_LBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime 
     const crackedL = @ptrCast(*const MouseL, &lParam);
     handler.OnLButtonUp(hwnd, crackedL.x, crackedL.y, crackedW.keyFlags);
     return 0;
+}
+
+pub fn FORWARD_WM_LBUTTONUP(hwnd: HWND, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_LBUTTONUP, wParamPtr.*, lParamPtr.*);
 }
 
 // 0x0203 WM_LBUTTONDBLCLK
@@ -339,6 +378,15 @@ pub fn HANDLE_WM_RBUTTONDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptim
     return 0;
 }
 
+pub fn FORWARD_WM_RBUTTONDOWN(hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    const msg = if (fDoubleClick) win32.WM_RBUTTONDBLCLK else win32.WM_RBUTTONDOWN;
+    _ = forwarder(hwnd, msg, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0205
 // pub fn OnRButtonUp(self: *T, hwnd: HWND, x: i16, y: i16, keyFlags: u32) void
 pub fn HANDLE_WM_RBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -346,6 +394,14 @@ pub fn HANDLE_WM_RBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime 
     const crackedL = @ptrCast(*const MouseL, &lParam);
     handler.OnRButtonUp(hwnd, crackedL.x, crackedL.y, crackedW.keyFlags);
     return 0;
+}
+
+pub fn FORWARD_WM_RBUTTONUP(hwnd: HWND, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_RBUTTONUP, wParamPtr.*, lParamPtr.*);
 }
 
 // 0x0206 WM_RBUTTONDBLCLK
@@ -366,6 +422,15 @@ pub fn HANDLE_WM_MBUTTONDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptim
     return 0;
 }
 
+pub fn FORWARD_WM_MBUTTONDOWN(hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    const msg = if (fDoubleClick) win32.WM_MBUTTONDBLCLK else win32.WM_MBUTTONDOWN;
+    _ = forwarder(hwnd, msg, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0208 WM_MBUTTONUP
 // pub fn OnMButtonUp(self: *T, hwnd: HWND, x: i16, y: i16, keyFlags: u32) void
 pub fn HANDLE_WM_MBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -373,6 +438,14 @@ pub fn HANDLE_WM_MBUTTONUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime 
     const crackedL = @ptrCast(*const MouseL, &lParam);
     handler.OnMButtonUp(hwnd, crackedL.x, crackedL.y, crackedW.keyFlags);
     return 0;
+}
+
+pub fn FORWARD_WM_MBUTTONUP(hwnd: HWND, x: i16, y: i16, keyFlags: u32, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = MouseW{ .keyFlags = keyFlags };
+    const crackedL align(@alignOf(LPARAM)) = MouseL{ .x = x, .y = y };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_MBUTTONUP, wParamPtr.*, lParamPtr.*);
 }
 
 // 0x0209 WM_MBUTTONDBLCLK
