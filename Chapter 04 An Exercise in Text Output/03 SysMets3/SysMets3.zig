@@ -36,6 +36,8 @@ const HINSTANCE = win32.HINSTANCE;
 const MSG = win32.MSG;
 const HWND = win32.HWND;
 const HDC = win32.HDC;
+const HICON = win32.HICON;
+const HCURSOR = win32.HCURSOR;
 const LPARAM = win32.LPARAM;
 const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
@@ -85,8 +87,8 @@ pub export fn wWinMain(
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = win32.LoadIcon(null, win32.IDI_APPLICATION),
-        .hCursor = win32.LoadCursor(null, win32.IDC_ARROW),
+        .hIcon = @ptrCast(HICON, win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hCursor = @ptrCast(HCURSOR, win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,

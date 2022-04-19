@@ -15,8 +15,6 @@ const std = @import("std");
 
 const WINAPI = std.os.windows.WINAPI;
 
-const GetStockBrush = @import("windowsx").windowsx.GetStockBrush;
-
 const win32 = struct {
     usingnamespace @import("win32").zig;
     usingnamespace @import("win32").system.library_loader;
@@ -33,8 +31,22 @@ const CW_USEDEFAULT = win32.CW_USEDEFAULT;
 const MSG = win32.MSG;
 const HWND = win32.HWND;
 const HDC = win32.HDC;
+const HICON = win32.HICON;
+const HCURSOR = win32.HCURSOR;
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
 const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
+const WNDCLASSEX = win32.WNDCLASSEX;
+const WNDCLASS_STYLES = win32.WNDCLASS_STYLES;
+const WINDOW_EX_STYLE = win32.WINDOW_EX_STYLE;
+const WINDOW_STYLE = win32.WINDOW_STYLE;
+const IDI_APPLICATION = win32.IDI_APPLICATION;
+const IDC_ARROW = win32.IDC_ARROW;
+const IMAGE_ICON = win32.IMAGE_ICON;
+const IMAGE_CURSOR = win32.IMAGE_CURSOR;
+const IMAGE_FLAGS = win32.IMAGE_FLAGS;
+const WHITE_BRUSH = win32.WHITE_BRUSH;
+
+const windowsx = @import("windowsx").windowsx;
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
@@ -45,23 +57,16 @@ pub export fn wWinMain(
     _ = pCmdLine;
 
     const app_name = L("HelloWin");
-    const wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
-        .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
+    const wndclassex = WNDCLASSEX{
+        .cbSize = @sizeOf(WNDCLASSEX),
+        .style = WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        //     wndclassex.hIcon = LoadImage(
-        //         hInstance,        // hInst
-        //         IDI_APPLICATION,  // name
-        //         IMAGE_ICON,       // type
-        //         0,                // cx
-        //         0,                // cy
-        //         LR_SHARED),       // fuLoad
-        .hIcon = win32.LoadIcon(null, win32.IDI_APPLICATION),
-        .hCursor = win32.LoadCursor(null, win32.IDC_ARROW),
-        .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
+        .hIcon = @ptrCast(HICON, win32.LoadImage(null, IDI_APPLICATION, IMAGE_ICON, 0, 0, IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hCursor = @ptrCast(HCURSOR, win32.LoadImage(null, IDC_ARROW, IMAGE_CURSOR, 0, 0, IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hbrBackground = windowsx.GetStockBrush(WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
@@ -82,10 +87,10 @@ pub export fn wWinMain(
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        win32.WINDOW_EX_STYLE.initFlags(.{}),
+        WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("The Hello Program"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU),
+        @intToEnum(WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
