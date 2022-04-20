@@ -192,6 +192,14 @@ pub fn HANDLE_WM_KEYDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T:
     return 0;
 }
 
+pub fn FORWARD_WM_KEYDOWN(hwnd: HWND, vk: VIRTUAL_KEY, cRepeat: i16, flags: u16, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = KeyW{ .vk = vk };
+    const crackedL align(@alignOf(LPARAM)) = KeyL{ .cRepeat = cRepeat, .flags = flags };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_KEYDOWN, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0101 WM_KEYUP
 // pub fn OnKey(self: *T, hwnd: HWND, vk: VIRTUAL_KEY, fDown: bool, cRepeat: i16, flags: u16) void
 pub fn HANDLE_WM_KEYUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -199,6 +207,14 @@ pub fn HANDLE_WM_KEYUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: t
     const crackedL = @ptrCast(*const KeyL, &lParam);
     handler.OnKey(hwnd, crackedW.vk, false, crackedL.cRepeat, crackedL.flags);
     return 0;
+}
+
+pub fn FORWARD_WM_KEYUP(hwnd: HWND, vk: VIRTUAL_KEY, cRepeat: i16, flags: u16, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = KeyW{ .vk = vk };
+    const crackedL align(@alignOf(LPARAM)) = KeyL{ .cRepeat = cRepeat, .flags = flags };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_KEYUP, wParamPtr.*, lParamPtr.*);
 }
 
 // 0x0102 WM_CHAR
@@ -228,6 +244,14 @@ pub fn HANDLE_WM_SYSKEYDOWN(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime
     return 0;
 }
 
+pub fn FORWARD_WM_SYSKEYDOWN(hwnd: HWND, vk: VIRTUAL_KEY, cRepeat: i16, flags: u16, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = KeyW{ .vk = vk };
+    const crackedL align(@alignOf(LPARAM)) = KeyL{ .cRepeat = cRepeat, .flags = flags };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_SYSKEYDOWN, wParamPtr.*, lParamPtr.*);
+}
+
 // 0x0105 WM_SYSKEYUP
 // OnSysKey(self: *T, hwnd: HWND, vk: VIRTUAL_KEY, fDown: bool, cRepeat: i16, flags: u16) void
 pub fn HANDLE_WM_SYSKEYUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -235,6 +259,14 @@ pub fn HANDLE_WM_SYSKEYUP(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T
     const crackedL = @ptrCast(*const KeyL, &lParam);
     handler.OnSysKey(hwnd, crackedW.vk, false, crackedL.cRepeat, crackedL.flags);
     return 0;
+}
+
+pub fn FORWARD_WM_SYSKEYUP(hwnd: HWND, vk: VIRTUAL_KEY, cRepeat: i16, flags: u16, forwarder: forwarder_type) void {
+    const crackedW align(@alignOf(WPARAM)) = KeyW{ .vk = vk };
+    const crackedL align(@alignOf(LPARAM)) = KeyL{ .cRepeat = cRepeat, .flags = flags };
+    const wParamPtr = @ptrCast(*const WPARAM, &crackedW);
+    const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
+    _ = forwarder(hwnd, win32.WM_SYSKEYUP, wParamPtr.*, lParamPtr.*);
 }
 
 // 0x0106 WM_SYSCHAR
