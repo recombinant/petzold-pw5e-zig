@@ -55,7 +55,6 @@ const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
 const HANDLE_WM_LBUTTONDOWN = windowsx.HANDLE_WM_LBUTTONDOWN;
 const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
 const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
-const FORWARD_WM_LBUTTONDOWN = windowsx.FORWARD_WM_LBUTTONDOWN;
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
