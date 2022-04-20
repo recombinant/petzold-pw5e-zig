@@ -33,8 +33,6 @@ const HWND = win32.HWND;
 const HDC = win32.HDC;
 const HICON = win32.HICON;
 const HCURSOR = win32.HCURSOR;
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
 const WNDCLASSEX = win32.WNDCLASSEX;
 const WNDCLASS_STYLES = win32.WNDCLASS_STYLES;
 const WINDOW_EX_STYLE = win32.WINDOW_EX_STYLE;
@@ -90,7 +88,10 @@ pub export fn wWinMain(
         WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("The Hello Program"),
-        @intToEnum(WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU),
+        win32.WINDOW_STYLE.initFlags(.{
+            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
+            .SYSMENU = 1,
+        }),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

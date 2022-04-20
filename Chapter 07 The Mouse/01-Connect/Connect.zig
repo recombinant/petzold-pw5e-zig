@@ -35,10 +35,6 @@ const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
 const POINT = win32.POINT;
 const CW_USEDEFAULT = win32.CW_USEDEFAULT;
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
-const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
-const WS_HSCROLL = @enumToInt(win32.WS_HSCROLL);
 const WM_LBUTTONDOWN = win32.WM_LBUTTONDOWN;
 const WM_MOUSEMOVE = win32.WM_MOUSEMOVE;
 const WM_LBUTTONUP = win32.WM_LBUTTONUP;
@@ -96,7 +92,10 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Connect-the-Points Mouse Demo"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL | WS_HSCROLL),
+        win32.WINDOW_STYLE.initFlags(.{
+            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
+            .SYSMENU = 1,
+        }),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

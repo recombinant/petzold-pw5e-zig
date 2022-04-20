@@ -45,9 +45,6 @@ const SB_VERT = win32.SB_VERT;
 const TA_TOP = @enumToInt(win32.TA_TOP);
 const TA_LEFT = @enumToInt(win32.TA_LEFT);
 const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
-const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
 
 /// The high-order word of lparam specifies the new height of the client area.
 fn GetYLParam(lparam: win32.LPARAM) i32 {
@@ -112,7 +109,11 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Get System Metrics No. 2"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL),
+        win32.WINDOW_STYLE.initFlags(.{
+            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
+            .SYSMENU = 1,
+            .VSCROLL = 1,
+        }),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

@@ -84,8 +84,6 @@ pub export fn wWinMain(
         win32.WINDOW_STYLE.initFlags(.{
             .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
             .SYSMENU = 1,
-            .VSCROLL = 1,
-            .HSCROLL = 1,
         }),
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position

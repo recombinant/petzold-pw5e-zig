@@ -37,10 +37,6 @@ const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
 const RECT = win32.RECT;
 const CW_USEDEFAULT = win32.CW_USEDEFAULT;
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
-const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
-const WS_HSCROLL = @enumToInt(win32.WS_HSCROLL);
 const WM_CREATE = win32.WM_CREATE;
 const WM_SIZE = win32.WM_SIZE;
 const WM_LBUTTONDOWN = win32.WM_LBUTTONDOWN;
@@ -105,7 +101,10 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Checker3 Mouse Hit-Test Demo"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL | WS_HSCROLL),
+        win32.WINDOW_STYLE.initFlags(.{
+            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
+            .SYSMENU = 1,
+        }),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
