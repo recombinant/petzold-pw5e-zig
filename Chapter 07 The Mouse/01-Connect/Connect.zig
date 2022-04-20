@@ -1,7 +1,7 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 8 - Connect
+// Chapter 7 - Connect
 //
 // The original source code copyright:
 //

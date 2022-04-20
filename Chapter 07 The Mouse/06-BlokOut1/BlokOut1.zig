@@ -1,7 +1,7 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 8 - BlokOut1
+// Chapter 7 - BlokOut1
 //
 // The original source code copyright:
 //

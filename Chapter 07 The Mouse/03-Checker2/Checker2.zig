@@ -1,7 +1,7 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 8 - Checker2
+// Chapter 7 - Checker2
 //
 // The original source code copyright:
 //
