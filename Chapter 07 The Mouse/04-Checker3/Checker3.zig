@@ -9,8 +9,6 @@
 //  CHECKER3.C -- Mouse Hit-Test Demo Program No. 3
 //                (c) Charles Petzold, 1998
 // -------------------------------------------------
-const szChildClass = L("Checker3_Child");
-//
 pub const UNICODE = true;
 
 const std = @import("std");
@@ -92,7 +90,7 @@ pub export fn wWinMain(
     wndclassex.lpfnWndProc = ChildWndProc;
     wndclassex.cbWndExtra = @sizeOf(usize); // sizeof(long)
     wndclassex.hIcon = null;
-    wndclassex.lpszClassName = szChildClass;
+    wndclassex.lpszClassName = ChildHandler.szChildClass;
 
     _ = win32.RegisterClassEx(&wndclassex);
 
@@ -163,7 +161,7 @@ const Handler = struct {
             while (j < DIVISIONS) : (j += 1) {
                 self.hwndChild[i][j] = win32.CreateWindowEx(
                     win32.WINDOW_EX_STYLE.initFlags(.{}),
-                    szChildClass,
+                    ChildHandler.szChildClass,
                     null,
                     win32.WINDOW_STYLE.initFlags(.{ .CHILD = 1, .VISIBLE = 1 }),
                     0,
@@ -211,6 +209,8 @@ const Handler = struct {
 };
 
 const ChildHandler = struct {
+    pub const szChildClass = L("Checker3_Child");
+
     pub fn OnCreate(self: *ChildHandler, hwnd: HWND, cs: *win32.CREATESTRUCT) LRESULT {
         _ = self;
         _ = cs;
