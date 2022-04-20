@@ -299,6 +299,8 @@ const ChildHandler = struct {
         _ = self;
         _ = hwndOldFocus;
 
+        // For focus messages, invalidate the window for repaint
+
         handler.idFocus = @intCast(@TypeOf(handler.idFocus), win32.GetWindowLongPtr(hwnd, win32.GWLP_ID));
 
         // The C version "fell through" the case statement to WM_KILLFOCUS
@@ -308,6 +310,7 @@ const ChildHandler = struct {
     pub fn OnKillFocus(self: *ChildHandler, hwnd: HWND, hwndNewFocus: ?HWND) void {
         _ = self;
         _ = hwndNewFocus;
+
         _ = win32.InvalidateRect(hwnd, null, TRUE);
     }
 
