@@ -18,4 +18,6 @@ Notes
   - `LoadImageW()`, `LoadImageA()` - 2nd (*name*) parameter
 - `TextOutW()`, `TextOutA()` the `lpString` parameter does not need to be zero terminated.
 - `IDC_ARROW` is present in zigwin32, but `IDC_WAIT` and others have been skipped. Probably to avoid the `align(1)` issues.
-- `LoadIcon` & `LoadCursor` have been superseded by the `LoadImage` function.
+- `LoadIcon` & `LoadCursor` functions have been superseded by the `LoadImage` function.
+- `GetWindowLongPtr`/`GetWindowLongPtr` functions are correctly mapped to `GetWindowLong`/`SetWindowLong` for 32 bit systems. No need to panic.
+- There is no replacement for the `CreateWindow` macro in *WinUser.h* that maps to `CreateWindowEx`
