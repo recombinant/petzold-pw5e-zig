@@ -217,10 +217,10 @@ const Handler = struct {
 
             const caps: i32 = win32.GetDeviceCaps(hdc, devcap.index);
             var buffer2: [6]u8 = [_]u8{0} ** 6;
-            _ = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{caps}) catch unreachable;
+            const slice2 = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{caps}) catch unreachable;
 
             var value: [6]u16 = [_]u16{0} ** 6;
-            var value_len = @intCast(i32, std.unicode.utf8ToUtf16Le(value[0..], &buffer2) catch unreachable);
+            var value_len = @intCast(i32, std.unicode.utf8ToUtf16Le(value[0..], slice2) catch unreachable);
 
             // Output
 

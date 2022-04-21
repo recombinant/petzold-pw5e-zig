@@ -349,10 +349,10 @@ const Handler = struct {
             var description_len = @intCast(i32, std.unicode.utf8ToUtf16Le(description[0..], metric.description) catch unreachable);
 
             var buffer2: [6]u8 = [_]u8{0} ** 6;
-            _ = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
+            const slice2 = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
 
             var index: [6]u16 = [_]u16{0} ** 6;
-            var index_len = @intCast(i32, std.unicode.utf8ToUtf16Le(index[0..], &buffer2) catch unreachable);
+            var index_len = @intCast(i32, std.unicode.utf8ToUtf16Le(index[0..], slice2) catch unreachable);
 
             // Output text
 
