@@ -22,6 +22,31 @@ const VIRTUAL_KEY = win32.VIRTUAL_KEY;
 const SYSTEM_PARAMETERS_INFO_ACTION = win32.SYSTEM_PARAMETERS_INFO_ACTION;
 
 // ----------------------------------------------------------------------------
+// WinNls.h
+
+// String based NLS APIs
+pub const LOCALE_NAME_USER_DEFAULT: ?[*:0]const TCHAR = null;
+pub const LOCALE_NAME_INVARIANT: ?[*:0]const TCHAR = win32.L("");
+pub const LOCALE_NAME_SYSTEM_DEFAULT: ?[*:0]const TCHAR = win32.L("!x-sys-default-locale");
+
+// ----------------------------------------------------------------------------
+// WinGdi.h
+pub const COLORREF = u32;
+pub fn RGB(r: u8, g: u8, b: u8) COLORREF {
+    return @as(u32, b) << 16 | @as(u32, g) << 8 | r;
+}
+
+pub fn GetRValue(rgb: COLORREF) u8 {
+    return @truncate(u8, rgb);
+}
+pub fn GetGValue(rgb: COLORREF) u8 {
+    return @truncate(u8, rgb >> 8);
+}
+pub fn GetBValue(rgb: COLORREF) u8 {
+    return @truncate(u8, rgb >> 16);
+}
+
+// ----------------------------------------------------------------------------
 
 pub fn DeletePen(hbr: ?HPEN) BOOL {
     return win32.DeleteObject(@as(?HGDIOBJ, hbr));
@@ -134,7 +159,7 @@ pub fn HANDLE_WM_PAINT(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handl
 }
 
 // 0x001A WM_SETTINGCHANGE
-// pub fn OnSettingChange(self: *T, hwnd: hwnd, uiAction: SYSTEM_PARAMETERS_INFO_ACTION, lpszSectionName: ?[*:0]const TCHAR) void
+// pub fn OnSettingChange(self: *T, hwnd: HWND, uiAction: SYSTEM_PARAMETERS_INFO_ACTION, lpszSectionName: ?[*:0]const TCHAR) void
 pub fn HANDLE_WM_SETTINGCHANGE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
     const W = packed struct {
         uiAction: SYSTEM_PARAMETERS_INFO_ACTION,
@@ -284,6 +309,15 @@ pub fn HANDLE_WM_SYSDEADCHAR(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptim
     const crackedW = @ptrCast(*const CharW, &wParam);
     const crackedL = @ptrCast(*const CharL, &lParam);
     handler.OnSysDeadChar(hwnd, crackedW.ch, crackedL.cRepeat);
+    return 0;
+}
+
+// 0x0113 WM_TIMER
+// pub fn OnTimer(self: *T, hwnd: HWND, id: usize) void
+pub fn HANDLE_WM_TIMER(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
+    const W = packed struct { id: usize };
+    const crackedW = @ptrCast(*const W, &wParam);
+    handler.OnTimer(hwnd, crackedW.id);
     return 0;
 }
 
