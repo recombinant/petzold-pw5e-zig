@@ -21,3 +21,4 @@ Notes
 - `LoadIcon` & `LoadCursor` functions have been superseded by the `LoadImage` function.
 - `GetWindowLongPtr`/`GetWindowLongPtr` functions are correctly mapped to `GetWindowLong`/`SetWindowLong` for 32 bit systems. No need to panic.
 - There is no replacement for the `CreateWindow` macro in *WinUser.h* that maps to `CreateWindowEx`
+- missing `StringCchCopy` and its ilk from *strsafe.h*
