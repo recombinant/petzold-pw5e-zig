@@ -111,7 +111,6 @@ pub export fn wWinMain(
         L("Checker4 Mouse Hit-Test Demo"),
         win32.WINDOW_STYLE.initFlags(.{
             .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
-            .SYSMENU = 1,
         }),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position

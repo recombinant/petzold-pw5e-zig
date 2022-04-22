@@ -37,8 +37,7 @@ const CW_USEDEFAULT = win32.CW_USEDEFAULT;
 const TA_TOP = @enumToInt(win32.TA_TOP);
 const TA_LEFT = @enumToInt(win32.TA_LEFT);
 const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
+const WS_OVERLAPPEDWINDOW = win32.WS_OVERLAPPEDWINDOW;
 const WM_CREATE = win32.WM_CREATE;
 const WM_PAINT = win32.WM_PAINT;
 const WM_DESTROY = win32.WM_DESTROY;
@@ -120,7 +119,7 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Device Capabilities"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU),
+        WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

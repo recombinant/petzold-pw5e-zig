@@ -91,9 +91,6 @@ pub export fn wWinMain(
         L("What Color"),
         win32.WINDOW_STYLE.initFlags(.{
             .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
-            .SYSMENU = 1,
-            .CAPTION = 1,
-            .BORDER = 1,
         }),
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position

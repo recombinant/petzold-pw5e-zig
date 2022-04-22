@@ -52,7 +52,6 @@ const TA_TOP = @enumToInt(win32.TA_TOP);
 const TA_LEFT = @enumToInt(win32.TA_LEFT);
 const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
 const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
 const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
 const WS_HSCROLL = @enumToInt(win32.WS_HSCROLL);
 const WM_CREATE = win32.WM_CREATE;
@@ -113,7 +112,7 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Get System Metrics No. 3"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_VSCROLL | WS_HSCROLL),
+        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL),
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

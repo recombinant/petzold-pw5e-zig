@@ -36,8 +36,7 @@ const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
 const HRGN = win32.HRGN;
 const CW_USEDEFAULT = win32.CW_USEDEFAULT;
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_SYSMENU = @enumToInt(win32.WS_SYSMENU);
+const WS_OVERLAPPEDWINDOW = win32.WS_OVERLAPPEDWINDOW;
 const WM_SIZE = win32.WM_SIZE;
 const WM_PAINT = win32.WM_PAINT;
 const WM_DESTROY = win32.WM_DESTROY;
@@ -89,7 +88,7 @@ pub export fn wWinMain(
         win32.WINDOW_EX_STYLE.initFlags(.{}),
         lpClassName,
         L("Draw a Clover"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_SYSMENU),
+        WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size

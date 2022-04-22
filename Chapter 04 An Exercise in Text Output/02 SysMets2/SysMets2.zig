@@ -111,7 +111,6 @@ pub export fn wWinMain(
         L("Get System Metrics No. 2"),
         win32.WINDOW_STYLE.initFlags(.{
             .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
-            .SYSMENU = 1,
             .VSCROLL = 1,
         }),
         CW_USEDEFAULT, // initial x position
