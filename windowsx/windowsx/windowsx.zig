@@ -7,6 +7,8 @@ const win32 = struct {
     usingnamespace @import("win32").ui.input.keyboard_and_mouse;
 };
 const BOOL = win32.BOOL;
+const TRUE = win32.TRUE;
+const FALSE = win32.FALSE;
 const TCHAR = win32.TCHAR;
 const HWND = win32.HWND;
 const WPARAM = win32.WPARAM;
@@ -20,6 +22,7 @@ const HFONT = win32.HFONT;
 const CREATESTRUCT = win32.CREATESTRUCT;
 const VIRTUAL_KEY = win32.VIRTUAL_KEY;
 const SYSTEM_PARAMETERS_INFO_ACTION = win32.SYSTEM_PARAMETERS_INFO_ACTION;
+const DRAWITEMSTRUCT = win32.DRAWITEMSTRUCT;
 
 // ----------------------------------------------------------------------------
 // WinNls.h
@@ -151,12 +154,53 @@ pub fn HANDLE_WM_KILLFOCUS(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: ty
     return 0;
 }
 
+// 0x000A WM_ENABLE
+// pub fn OnEnable(hwnd: HWND, fEnable: bool) void
+pub fn HANDLE_WM_ENABLE(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
+    const fEnable: bool = if (wParam != 0) true else false;
+    handler.OnEnable(hwnd, fEnable);
+    return 0;
+}
+
+pub fn FORWARD_WM_ENABLE(hwnd: HWND, fEnable: bool, forwarder: forwarder_type) void {
+    const wParam: BOOL = if (fEnable) TRUE else FALSE;
+    _ = forwarder(hwnd, win32.WM_ENABLE, wParam, 0);
+}
+
+// TODO: 0x000B WM_SETREDRAW
+// TODO: 0x000C WM_SETTEXT
+// TODO: 0x000D WM_GETTEXT
+// TODO: 0x000E WM_GETTEXTLENGTH
+
 // 0x000f WM_PAINT
 // pub fn OnPaint(self: *T, hwnd: HWND) void
 pub fn HANDLE_WM_PAINT(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
     handler.OnPaint(hwnd);
     return 0;
 }
+
+pub fn FORWARD_WM_PAINT(hwnd: HWND, forwarder: forwarder_type) void {
+    _ = forwarder(hwnd, win32.WM_PAINT, 0, 0);
+}
+
+// 0x0010 WM_CLOSE
+// pub fn OnClose(self: *T, hwnd: HWND) void
+pub fn HANDLE_WM_CLOSE(hwnd: HWND, _: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
+    handler.OnClose(hwnd);
+    return 0;
+}
+
+pub fn FORWARD_WM_CLOSE(hwnd: HWND, forwarder: forwarder_type) void {
+    _ = forwarder(hwnd, win32.WM_CLOSE, 0, 0);
+}
+
+// TODO: 0x0011 WM_QUERYENDSESSION
+// TODO: 0x0012 WM_QUIT
+// TODO: 0x0013 WM_QUERYOPEN
+// TODO: 0x0014 WM_ERASEBKGND
+// TODO: 0x0015 WM_SYSCOLORCHANGE
+// TODO: 0x0016 WM_ENDSESSION
+// TODO: 0x0018 WM_SHOWWINDOW
 
 // 0x001A WM_SETTINGCHANGE
 // pub fn OnSettingChange(self: *T, hwnd: HWND, uiAction: SYSTEM_PARAMETERS_INFO_ACTION, lpszSectionName: ?[*:0]const TCHAR) void
@@ -173,6 +217,22 @@ pub fn HANDLE_WM_SETTINGCHANGE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, compt
     return 0;
 }
 
+// 0x002B WM_DRAWITEM
+// pub fn OnDrawItem(self: *T, hwnd: HWND, lpDrawItem: *const DRAWITEMSTRUCT) void
+pub fn HANDLE_WM_DRAWITEM(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LPARAM {
+    const L = packed struct {
+        lpDrawItem: *const DRAWITEMSTRUCT,
+    };
+    const crackedL = @ptrCast(*const L, &lParam);
+    handler.OnDrawItem(hwnd, crackedL.lpDrawItem);
+    return 0;
+}
+
+// TODO: 0x0030 WM_SETFONT
+// TODO: 0x0031 WM_GETFONT
+// TODO: 0x004E WM_NOTIFY
+// TODO: 0x0051 WM_INPUTLANGCHANGE
+
 // 0x007E WM_DISPLAYCHANGE
 // pub fn OnDisplayChange(self: *T, hwnd:  HWND, bitsPerPixel: u32, cxScreen: u16, cyScreen: u16) void
 pub fn HANDLE_WM_DISPLAYCHANGE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -188,6 +248,13 @@ pub fn HANDLE_WM_DISPLAYCHANGE(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, compt
     handler.OnDisplayChange(hwnd, crackedW.bitsPerPixel, crackedL.cxScreen, crackedL.cyScreen);
     return 0;
 }
+
+// TODO: 0x0081 WM_NCCREATE
+// TODO: 0x0082 WM_NCDESTROY
+// TODO: 0x0083 WM_NCCALCSIZE
+// TODO: 0x0084 WM_NCHITTEST
+// TODO: 0x0085 WM_NCPAINT
+// TODO: 0x0086 WM_NCACTIVATE
 
 // ---------------------------------------------------- Key
 // --------------------------------------------------- Char
@@ -312,6 +379,28 @@ pub fn HANDLE_WM_SYSDEADCHAR(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptim
     return 0;
 }
 
+// --------------------------------------------------------
+
+// TODO: 0x0110 WM_INITDIALOG
+
+// 0x0111 WM_COMMAND
+// pub fn OnCommand(self: *T, hwnd: HWND, id: i16, hwndCtl: ?HWND, codeNotify: u16) void
+pub fn HANDLE_WM_COMMAND(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime T: type, handler: *T) LRESULT {
+    const W = packed struct {
+        id: i16,
+        codeNotitfy: u16,
+    };
+    const L = packed struct {
+        hwndCtrl: ?HWND,
+    };
+    const crackedW = @ptrCast(*const W, &wParam);
+    const crackedL = @ptrCast(*const L, &lParam);
+    handler.OnCommand(hwnd, crackedW.id, crackedW.hwnd, crackedW.codeNotify);
+    return 0;
+}
+
+// TODO: 0x0112 WM_SYSCOMMAND
+
 // 0x0113 WM_TIMER
 // pub fn OnTimer(self: *T, hwnd: HWND, id: usize) void
 pub fn HANDLE_WM_TIMER(hwnd: HWND, wParam: WPARAM, _: LPARAM, comptime T: type, handler: *T) LRESULT {
@@ -363,6 +452,17 @@ pub fn FORWARD_WM_VSCROLL(hwnd: HWND, hwndCtrl: ?HWND, code: u16, pos: i16, forw
     const lParamPtr = @ptrCast(*const LPARAM, &crackedL);
     _ = forwarder(hwnd, win32.WM_VSCROLL, wParamPtr.*, lParamPtr.*);
 }
+
+// --------------------------------------------------------
+
+// TODO: 0x0117 WM_INITMENUPOPUP
+// TODO: 0x0132 WM_CTLCOLORMSGBOX
+// TODO: 0x0133 WM_CTLCOLOREDIT
+// TODO: 0x0134 WM_CTLCOLORLISTBOX
+// TODO: 0x0135 WM_CTLCOLORBTN
+// TODO: 0x0136 WM_CTLCOLORDLG
+// TODO: 0x0137 WM_CTLCOLORSCROLLBAR
+// TODO: 0x0138 WM_CTLCOLORSTATIC
 
 // -------------------------------------------------- Mouse
 
@@ -535,3 +635,33 @@ pub fn HANDLE_WM_MOUSEWHEEL(hwnd: HWND, wParam: WPARAM, lParam: LPARAM, comptime
     handler.OnMouseWheel(hwnd, crackedL.x, crackedL.y, crackedW.zDelta, crackedW.fwKeys);
     return 0;
 }
+
+// --------------------------------------------------------
+
+// TODO: 0x0220 WM_MDICREATE
+// TODO: 0x0221 WM_MDIDESTROY
+// TODO: 0x0222 WM_MDIACTIVATE
+// TODO: 0x0223 WM_MDIRESTORE
+// TODO: 0x0224 WM_MDINEXT
+// TODO: 0x0225 WM_MDIMAXIMIZE
+// TODO: 0x0226 WM_MDITILE
+// TODO: 0x0227 WM_MDICASCADE
+// TODO: 0x0228 WM_MDIICONARRANGE
+// TODO: 0x0229 WM_MDIGETACTIVE
+// TODO: 0x0230 WM_MDISETMENU
+// TODO: 0x0300 WM_CUT
+// TODO: 0x0301 WM_COPY
+// TODO: 0x0302 WM_PASTE
+// TODO: 0x0303 WM_CLEAR
+// TODO: 0x0304 WM_UNDO
+// TODO: 0x0307 WM_DESTROYCLIPBOARD
+// TODO: 0x0308 WM_DRAWCLIPBOARD
+// TODO: 0x0309 WM_PAINTCLIPBOARD
+// TODO: 0x030A WM_VSCROLLCLIPBOARD
+// TODO: 0x030B WM_SIZECLIPBOARD
+// TODO: 0x030C WM_ASKCBFORMATNAME
+// TODO: 0x030D WM_CHANGECBCHAIN
+// TODO: 0x030F WM_QUERYNEWPALETTE
+// TODO: 0x0310 WM_PALETTEISCHANGING
+// TODO: 0x0311 WM_PALETTECHANGED
+
