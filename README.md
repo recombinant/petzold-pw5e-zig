@@ -3,15 +3,17 @@
 
 ---
 
-Not much content yet. The Zig (beta) release is at 0.9.1 at the time of writing.
+Not much content yet. The Zig (beta) release is at 0.10.0 at the time of writing.
+
+The code works with Zig 0.9.1 - it requires tweaking to work with 0.10.0 and that won't happen until after [zigwin32](https://github.com/marlersoft/zigwin32) has been updated to work with Zig 0.10.0
 
 ---
 
-There is a set of Zig bindings for Win32 located at https://github.com/marlersoft/zigwin32 so work is now proceeding.
-
 Notes
 -----
-- There is no WIN32_LEAN_AND_MEAN. Zig is quick enough.
+- This project uses [zigwin32](https://github.com/marlersoft/zigwin32) to eliminate importing the Windows header files directly. (Which is good as `@cImport()` has issues parsing the complexities of said Windows header files.)
+
+- Unlike C/C++ there is no `WIN32_LEAN_AND_MEAN` to reduce the #include C header file burden. Zig is quick enough.
 
 - https://github.com/marlersoft/zigwin32gen/issues/9 causes occasional memory align panics with CreateWindowExW and other functions. To fix `align(1)` needs to be added to the offending parameter in the zigwin32 declarations.
   - `CreateWindowExW()`, `CreateWindowExA()` - 2nd (*lpClassName*) parameter
