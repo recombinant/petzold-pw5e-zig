@@ -7,7 +7,7 @@
 //  SYSMETS.H -- System metrics display structure
 // -----------------------------------------------
 
-const win32 = @import("win32").ui.windows_and_messaging;
+const win32 = @import("zigwin32").ui.windows_and_messaging;
 
 const SystemMetrics = struct {
     index: win32.SYSTEM_METRICS_INDEX,
@@ -99,8 +99,8 @@ pub const buffer_sizes = blk: {
     var label_size: usize = 0;
     var description_size: usize = 0;
     for (sysmetrics) |metric| {
-        label_size = @maximum(label_size, metric.label.len);
-        description_size = @maximum(description_size, metric.description.len);
+        label_size = @max(label_size, metric.label.len);
+        description_size = @max(description_size, metric.description.len);
     }
     break :blk .{
         .label = label_size + 1,
@@ -108,4 +108,4 @@ pub const buffer_sizes = blk: {
     };
 };
 
-pub const num_lines = @intCast(i32, sysmetrics.len);
+pub const num_lines: i32 = @intCast(sysmetrics.len);
