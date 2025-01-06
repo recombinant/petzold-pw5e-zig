@@ -84,7 +84,7 @@ pub export fn wWinMain(
         WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
         L("The Hello Program"),
-        win32.WS_TILEDWINDOW,
+        win32.WS_OVERLAPPEDWINDOW,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
         win32.CW_USEDEFAULT, // initial x size

@@ -105,9 +105,9 @@ pub export fn wWinMain(
         return 0; // premature exit
     }
 
-    const ws_tiled_window: u32 = @bitCast(win32.WS_TILEDWINDOW);
+    const ws_overlapped_window: u32 = @bitCast(win32.WS_OVERLAPPEDWINDOW);
     const ws_vscroll: u32 = @bitCast(win32.WS_VSCROLL);
-    const dwStyle: win32.WINDOW_STYLE = @bitCast(ws_tiled_window | ws_vscroll);
+    const dwStyle: win32.WINDOW_STYLE = @bitCast(ws_overlapped_window | ws_vscroll);
 
     // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
