@@ -14,9 +14,9 @@ pub const UNICODE = true;
 const WINAPI = @import("std").os.windows.WINAPI;
 
 const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
+    usingnamespace @import("zigwin32").zig;
+    usingnamespace @import("zigwin32").foundation;
+    usingnamespace @import("zigwin32").ui.windows_and_messaging;
 };
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
