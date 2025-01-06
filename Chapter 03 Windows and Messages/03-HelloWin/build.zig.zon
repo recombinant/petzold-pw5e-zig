@@ -1,0 +1,23 @@
+.{
+    .name = "03-HelloWin",
+    .version = "0.0.0",
+
+    // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
+    // zig fetch --save "git+https://github.com/recombinant/windowsx"
+    .dependencies = .{
+        .zigwin32 = .{
+            .url = "git+https://github.com/marlersoft/zigwin32#32d085ee67374ad2ec24fc012e6876ca27958fb7",
+            .hash = "1220adcf9ec0447c6a170ed069ed9d52c999b3dcae3557b3647878bf65ee59a2f5d0",
+        },
+        .windowsx = .{
+            .url = "git+https://github.com/recombinant/windowsx#f77b3254c018819e07b7be3c9de3661b17734c42",
+            .hash = "122056a97fc7477de981f47ff3412cbd48b69b09288e7707657077a7e99300e5c287",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
