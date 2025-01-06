@@ -1,5 +1,5 @@
 .{
-    .name = "07-DevCaps",
+    .name = "07-DevCaps1",
     .version = "0.0.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
@@ -17,6 +17,6 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "SysMets2.zig",
+        "DevCaps1.zig",
     },
 }

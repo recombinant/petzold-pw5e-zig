@@ -17,6 +17,6 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "SysMets2.zig",
+        "SysMets3.zig",
     },
 }
