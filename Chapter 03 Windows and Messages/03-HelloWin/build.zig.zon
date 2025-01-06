@@ -6,12 +6,12 @@
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
     .dependencies = .{
         .zigwin32 = .{
-            .url = "git+https://github.com/marlersoft/zigwin32#32d085ee67374ad2ec24fc012e6876ca27958fb7",
-            .hash = "1220adcf9ec0447c6a170ed069ed9d52c999b3dcae3557b3647878bf65ee59a2f5d0",
+            .url = "git+https://github.com/marlersoft/zigwin32#73de834b8c062849320148bfb3d872bf55146c01",
+            .hash = "122093b6b38b11c27a48c4822511aa41b4fff36719f2cb3bb7fe0f8aec2f7b89fa52",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#f77b3254c018819e07b7be3c9de3661b17734c42",
-            .hash = "122056a97fc7477de981f47ff3412cbd48b69b09288e7707657077a7e99300e5c287",
+            .url = "git+https://github.com/recombinant/windowsx#0a8c8f4a0f1ca848b2c95d2664f21f916ae60068",
+            .hash = "1220fdfd68ff4ebf9864fed61ec0b95c85abe2660a1e12e110f84bcfb714184160ee",
         },
     },
 
