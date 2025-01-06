@@ -11,14 +11,14 @@
 // -----------------------------------------------------
 const std = @import("std");
 
-pub const UNICODE = true;
+pub const UNICODE = true; // used by zigwin32
 
 const WINAPI = std.os.windows.WINAPI;
 
 const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
+    usingnamespace @import("zigwin32").zig;
+    usingnamespace @import("zigwin32").foundation;
+    usingnamespace @import("zigwin32").ui.windows_and_messaging;
 };
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
@@ -31,9 +31,9 @@ fn MessageBoxPrintf(
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    // catch unreachable to ignore any errors.
+    // catch unreachable to panic on any errors.
     const buffer = std.fmt.allocPrint(allocator, fmt, args) catch unreachable;
-    const string = std.unicode.utf8ToUtf16LeWithNull(allocator, buffer) catch unreachable;
+    const string = std.unicode.utf8ToUtf16LeAllocZ(allocator, buffer) catch unreachable;
 
     defer {
         allocator.free(string);
@@ -41,7 +41,7 @@ fn MessageBoxPrintf(
     }
 
     // MessageBox() always returns IDOK with MB_OK
-    return win32.MessageBoxW(null, string, L(caption), win32.MB_OK);
+    return win32.MessageBox(null, string, L(caption), win32.MB_OK);
 }
 
 pub export fn wWinMain(
