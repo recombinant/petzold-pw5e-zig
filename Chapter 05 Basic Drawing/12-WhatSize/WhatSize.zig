@@ -16,12 +16,12 @@ const std = @import("std");
 const WINAPI = std.os.windows.WINAPI;
 
 const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").system.system_services;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
+    usingnamespace @import("zigwin32").zig;
+    usingnamespace @import("zigwin32").system.library_loader;
+    usingnamespace @import("zigwin32").foundation;
+    usingnamespace @import("zigwin32").system.system_services;
+    usingnamespace @import("zigwin32").ui.windows_and_messaging;
+    usingnamespace @import("zigwin32").graphics.gdi;
 };
 const BOOL = win32.BOOL;
 const TRUE = win32.TRUE;
@@ -34,19 +34,11 @@ const LPARAM = win32.LPARAM;
 const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
 const POINT = win32.POINT;
-const CW_USEDEFAULT = win32.CW_USEDEFAULT;
-const WS_OVERLAPPEDWINDOW = win32.WS_OVERLAPPEDWINDOW;
-const WM_CREATE = win32.WM_CREATE;
-const WM_PAINT = win32.WM_PAINT;
-const WM_DESTROY = win32.WM_DESTROY;
 
-const windowsx = @import("windowsx").windowsx;
+const windowsx = @import("windowsx");
 const GetStockBrush = windowsx.GetStockBrush;
 const GetStockFont = windowsx.GetStockFont;
 const SelectFont = windowsx.SelectFont;
-const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
-const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
-const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 pub export fn wWinMain(
     hInstance: HINSTANCE,
@@ -57,13 +49,13 @@ pub export fn wWinMain(
     const app_name = L("WhatSize");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
-        .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
+        .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.HICON, win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
-        .hCursor = @ptrCast(win32.HCURSOR, win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -72,27 +64,23 @@ pub export fn wWinMain(
 
     const atom: u16 = win32.RegisterClassEx(&wndclassex);
     if (0 == atom) {
-        std.debug.print("failed RegisterClassEx()", .{});
+        std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
     }
 
-    // If a memory align panic occurs then the CreateWindowExW() Zig declaration
-    // needs to have align(1) added to the lpClassName parameter.
-    //   lpClassName: ?[*:0]align(1) const u16,
-    //                      ^^^^^^^^
+    // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
-    const lpClassName = @intToPtr([*:0]align(1) const u16, atom);
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        win32.WINDOW_EX_STYLE.initFlags(.{}),
-        lpClassName,
+        win32.WINDOW_EX_STYLE{},
+        @ptrFromInt(atom),
         L("What Size is the Window?"),
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, // initial x position
-        CW_USEDEFAULT, // initial y position
-        CW_USEDEFAULT, // initial x size
-        CW_USEDEFAULT, // initial y size
+        win32.WS_OVERLAPPEDWINDOW,
+        win32.CW_USEDEFAULT, // initial x position
+        win32.CW_USEDEFAULT, // initial y position
+        win32.CW_USEDEFAULT, // initial x size
+        win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
         win32.GetModuleHandle(null),
@@ -100,13 +88,13 @@ pub export fn wWinMain(
     );
 
     if (null == hwnd) {
-        std.debug.print("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
-    _ = win32.ShowWindow(hwnd, @intToEnum(win32.SHOW_WINDOW_CMD, nCmdShow));
+    _ = win32.ShowWindow(hwnd, @bitCast(nCmdShow));
     if (0 == win32.UpdateWindow(hwnd)) {
-        std.debug.print("failed UpdateWindow()", .{});
+        std.log.err("failed UpdateWindow()", .{});
         return 0; // premature exit
     }
 
@@ -117,7 +105,7 @@ pub export fn wWinMain(
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.debug.print("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
@@ -127,7 +115,7 @@ pub export fn wWinMain(
     }
 
     // Normal exit
-    return @bitCast(c_int, @truncate(c_uint, msg.wParam)); // WM_QUIT
+    return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
 fn Show(hwnd: HWND, hdc: ?HDC, xText: i32, yText: i32, iMapMode: win32.HDC_MAP_MODE, szMapMode: []const u8) void {
@@ -138,18 +126,18 @@ fn Show(hwnd: HWND, hdc: ?HDC, xText: i32, yText: i32, iMapMode: win32.HDC_MAP_M
 
         _ = win32.SetMapMode(hdc, iMapMode);
         _ = win32.GetClientRect(hwnd, &rect);
-        _ = win32.DPtoLP(hdc, @ptrCast([*]win32.POINT, &rect), 2);
+        _ = win32.DPtoLP(hdc, @ptrCast(&rect), 2);
     }
 
     const length = 20 + 8 * 4;
     var buffer1: [length]u8 = undefined;
-    // TODO: format positive numbers without the leading + symbol
+    // TODO: format signed positive numbers without the leading + symbol
     const slice1 = std.fmt.bufPrint(buffer1[0..], "{s:<20} {d:7} {d:7} {d:7} {d:7}", .{ szMapMode, rect.left, rect.right, rect.top, rect.bottom }) catch unreachable;
 
     var buffer2: [length]u16 = undefined;
-    const len2 = @intCast(i32, std.unicode.utf8ToUtf16Le(buffer2[0..], slice1) catch unreachable);
+    const len2: i32 = @intCast(std.unicode.utf8ToUtf16Le(buffer2[0..], slice1) catch unreachable);
 
-    _ = win32.TextOut(hdc, xText, yText, &buffer2, len2);
+    _ = win32.TextOut(hdc, xText, yText, @ptrCast(&buffer2), len2);
 }
 
 const Handler = struct {
@@ -200,13 +188,22 @@ const Handler = struct {
     }
 };
 
-var handler = Handler{};
+const WM_CREATE = win32.WM_CREATE;
+const WM_PAINT = win32.WM_PAINT;
+const WM_DESTROY = win32.WM_DESTROY;
+const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
+const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
+const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
+    const state = struct {
+        var handler = Handler{};
+    };
+
     return switch (message) {
-        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
-        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
         else => win32.DefWindowProc(hwnd, message, wParam, lParam),
     };
 }
