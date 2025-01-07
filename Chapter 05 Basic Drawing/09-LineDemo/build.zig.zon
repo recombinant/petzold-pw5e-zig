@@ -1,0 +1,22 @@
+.{
+    .name = "09-LineDemo",
+    .version = "0.0.0",
+
+    // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
+    // zig fetch --save "git+https://github.com/recombinant/windowsx"
+    .dependencies = .{
+        .zigwin32 = .{
+            .url = "git+https://github.com/marlersoft/zigwin32#73de834b8c062849320148bfb3d872bf55146c01",
+            .hash = "122093b6b38b11c27a48c4822511aa41b4fff36719f2cb3bb7fe0f8aec2f7b89fa52",
+        },
+        .windowsx = .{
+            .url = "git+https://github.com/recombinant/windowsx#0a8c8f4a0f1ca848b2c95d2664f21f916ae60068",
+            .hash = "1220fdfd68ff4ebf9864fed61ec0b95c85abe2660a1e12e110f84bcfb714184160ee",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "LineDemo.zig",
+    },
+}
