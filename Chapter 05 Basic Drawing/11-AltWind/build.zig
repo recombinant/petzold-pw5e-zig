@@ -8,12 +8,12 @@ pub fn build(b: *std.Build) void {
     const windowsx = b.dependency("windowsx", .{}).module("windowsx");
 
     const exe_mod = b.createModule(.{
-        .root_source_file = b.path("Altwind.zig"),
+        .root_source_file = b.path("AltWind.zig"),
         .target = target,
         .optimize = optimize,
     });
     const exe = b.addExecutable(.{
-        .name = "Altwind",
+        .name = "AltWind",
         .root_module = exe_mod,
     });
     exe.root_module.addImport("zigwin32", zigwin32);

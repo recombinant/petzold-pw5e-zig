@@ -1,5 +1,5 @@
 .{
-    .name = "11-Altwind",
+    .name = "11-AltWind",
     .version = "0.0.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
@@ -17,6 +17,6 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "Altwind.zig",
+        "AltWind.zig",
     },
 }
