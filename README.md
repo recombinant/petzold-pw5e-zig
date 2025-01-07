@@ -1,7 +1,7 @@
 # petzold-pw5e-zig
 [Zig](https://ziglang.org/) transliteration of the code in Charles Petzold's excellent book Programming Windows 5th Edition ISBN-10 157231995X - all 2.4kg of it (that's over 5lb).
 
-# 2025/01/06
+# 2025/01/07
 The following have been updated to the (near release) Zig 0.14 and a contemporaneous version of zigwin32 (2025/01/06):
 
 - Chapter 1
@@ -17,6 +17,12 @@ The following have been updated to the (near release) Zig 0.14 and a contemporan
   Chapter 5
   - 07-DevCaps1
   - 08-SineWave
+  - 09-LineDemo
+  - 10-Bezier
+  - 11-AltWind
+  - 12-WhatSize
+  - 13-RandRect
+  - 14-Clover
 
 There remaining chapters need to be updated or committed. Some of the code is pre-Zig 0.9.1 and in
 need of some TLC.
