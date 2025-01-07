@@ -141,16 +141,11 @@ const Handler = struct {
         _ = win32.MoveToEx(hdc, 0, @divTrunc(self.client_height, 2), null);
         _ = win32.LineTo(hdc, self.client_width, @divTrunc(self.client_height, 2));
 
-        var idx: usize = 0;
-        var i: i32 = 0;
-        while (i < NUM) : ({
-            idx += 1;
-            i += 1;
-        }) {
+        for (0..NUM) |i| {
             const factor = @as(f32, @floatFromInt(i)) / NUM;
 
-            apt[idx].x = @divTrunc(i * self.client_width, NUM);
-            apt[idx].y = @intFromFloat(half_height * (1 - @sin(2 * std.math.pi * factor)));
+            apt[i].x = @divTrunc(@as(i32, @intCast(i)) * self.client_width, NUM);
+            apt[i].y = @intFromFloat(half_height * (1 - @sin(2 * std.math.pi * factor)));
         }
         _ = win32.Polyline(hdc, &apt, NUM);
     }
