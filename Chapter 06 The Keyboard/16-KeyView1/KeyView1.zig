@@ -19,10 +19,8 @@ const win32 = struct {
     usingnamespace @import("zigwin32").zig;
     usingnamespace @import("zigwin32").system.library_loader;
     usingnamespace @import("zigwin32").foundation;
-    usingnamespace @import("zigwin32").system.system_services;
     usingnamespace @import("zigwin32").ui.windows_and_messaging;
     usingnamespace @import("zigwin32").graphics.gdi;
-    usingnamespace @import("zigwin32").ui.controls;
     usingnamespace @import("zigwin32").ui.input.keyboard_and_mouse;
 };
 const BOOL = win32.BOOL;
