@@ -28,7 +28,6 @@ const win32 = struct {
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
 const TRUE = win32.TRUE;
-const TCHAR = win32.TCHAR;
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
 const MSG = win32.MSG;
@@ -40,7 +39,6 @@ const LRESULT = win32.LRESULT;
 const CREATESTRUCT = win32.CREATESTRUCT;
 const RECT = win32.RECT;
 const TEXTMETRIC = win32.TEXTMETRIC;
-const VIRTUAL_KEY = win32.VIRTUAL_KEY;
 
 const windowsx = @import("windowsx");
 
@@ -86,7 +84,7 @@ pub export fn wWinMain(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
-        L("Get System Metrics No. 4"),
+        L("Keyboard Message Viewer #1"),
         dwStyle,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
