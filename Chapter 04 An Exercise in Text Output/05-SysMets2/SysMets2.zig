@@ -187,9 +187,16 @@ fn WndProc(
                 state.cyChar = tm.tmHeight + tm.tmExternalLeading;
             }
 
-            const flag = win32.SCROLLBAR_CONSTANTS{ .VERT = 1 };
-            _ = win32.SetScrollRange(hwnd, flag, 0, num_lines - 1, FALSE);
-            _ = win32.SetScrollPos(hwnd, flag, state.iVscrollPos, TRUE);
+            var si = win32.SCROLLINFO{
+                .cbSize = @sizeOf(win32.SCROLLINFO),
+                .fMask = win32.SCROLLINFO_MASK{ .RANGE = 1, .POS = 1 },
+                .nMin = 0,
+                .nMax = num_lines,
+                .nPos = state.iVscrollPos,
+                .nPage = undefined,
+                .nTrackPos = undefined,
+            };
+            _ = win32.SetScrollInfo(hwnd, win32.SB_VERT, &si, TRUE);
 
             return 0;
         },
