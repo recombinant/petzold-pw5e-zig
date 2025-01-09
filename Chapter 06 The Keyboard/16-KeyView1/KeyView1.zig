@@ -120,6 +120,15 @@ pub export fn wWinMain(
     return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
+// gpa and allocator are file scope
+// var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+// const allocator = gpa.allocator();
+const MsgList = std.DoublyLinkedList(MSG);
+const MsgNode = MsgList.Node;
+const MsgNodePool = std.heap.MemoryPoolExtra(MsgNode, .{});
+var msg_node_pool = MsgNodePool.init(std.heap.page_allocator);
+var msg_list = MsgList{};
+
 const Handler = struct {
     cxClientMax: i32 = undefined,
     cyClientMax: i32 = undefined,
@@ -149,8 +158,6 @@ const Handler = struct {
         }
 
         self.cLinesMax = @max(2, @divTrunc(self.cyClientMax, self.cyChar) - 2);
-
-        pmsg.ensureTotalCapacity(@intCast(self.cLinesMax)) catch unreachable;
 
         self.calcScrollingRectangle(hwnd);
     }
@@ -183,20 +190,24 @@ const Handler = struct {
     pub fn storeMessage(self: *Handler, hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) void {
         // Cap storage array
 
-        while (pmsg.items.len > self.cLinesMax - 1) {
-            _ = pmsg.pop();
+        while (msg_list.len > self.cLinesMax - 1) {
+            if (msg_list.pop()) |node| {
+                msg_node_pool.destroy(node);
+            }
         }
 
         // Store new message
 
-        pmsg.insert(0, MSG{
+        const new_node = msg_node_pool.create() catch unreachable;
+        new_node.* = MsgNode{ .data = MSG{
             .hwnd = hwnd,
             .message = message,
             .wParam = wParam,
             .lParam = lParam,
             .pt = undefined,
             .time = undefined,
-        }) catch unreachable;
+        } };
+        msg_list.prepend(new_node);
 
         // Scroll up the display
 
@@ -225,7 +236,13 @@ const Handler = struct {
             "WM_SYSCHAR",    "WM_SYSDEADCHAR",
         };
 
-        for (pmsg.items, 0..) |msg, i| {
+        var j: i32 = 0;
+        var it = msg_list.first;
+        while (it) |node| : ({
+            it = node.next;
+            j += 1;
+        }) {
+            const msg = node.data;
             const iType = (msg.message == WM_CHAR or
                 msg.message == WM_SYSCHAR or
                 msg.message == WM_DEADCHAR or
@@ -257,7 +274,7 @@ const Handler = struct {
             var writer = stream.writer();
 
             // part 1 of 3
-            writer.print("{s:<13} ", .{messages[msg - win32.WM_KEYFIRST]}) catch unreachable;
+            writer.print("{s:<13} ", .{messages[msg.message - win32.WM_KEYFIRST]}) catch unreachable;
             // part 2 of 3
             if (iType) {
                 // WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR
@@ -297,8 +314,7 @@ const Handler = struct {
             // convert the line text to unicode
             var szBuffer = [_:0]u16{0} ** 128;
             const buffer_len = std.unicode.utf8ToUtf16Le(&szBuffer, stream.getWritten()) catch unreachable;
-            const iy: i32 = @intCast(i);
-            const y: i32 = (@divTrunc(self.cyClient, self.cyChar) - 1 - iy) * self.cyChar;
+            const y: i32 = (@divTrunc(self.cyClient, self.cyChar) - 1 - j) * self.cyChar;
             _ = win32.TextOut(hdc, 0, y, &szBuffer, @intCast(buffer_len));
         }
     }
@@ -307,11 +323,6 @@ const Handler = struct {
         win32.PostQuitMessage(0);
     }
 };
-
-// gpa and allocator are file scope
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-var pmsg = std.ArrayList(MSG).init(allocator);
 
 const WM_CREATE = win32.WM_CREATE;
 const WM_DISPLAYCHANGE = win32.WM_DISPLAYCHANGE;
