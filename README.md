@@ -4,17 +4,17 @@
 # 2025/01/07
 The following have been updated to the (near release) Zig 0.14 and a contemporaneous version of zigwin32 (2025/01/06):
 
-- Chapter 1
+- Chapter 1 Getting Started
   - 01-HelloMsg
-- Chapter 2
+- Chapter 2 An Introduction to Unicode
   - 02-ScrnSize
-- Chapter 3
+- Chapter 3 Windows and Messages
   - 03-HelloWin
-- Chapter 4
+- Chapter 4 An Exercise in Text Output
   - 04-SysMets1
   - 05-SysMets2
   - 06-SysMets3
-  Chapter 5
+- Chapter 5 Basic Drawing
   - 07-DevCaps1
   - 08-SineWave
   - 09-LineDemo
@@ -23,12 +23,24 @@ The following have been updated to the (near release) Zig 0.14 and a contemporan
   - 12-WhatSize
   - 13-RandRect
   - 14-Clover
+- Chapter 06 The Keyboard
+  - 15-SysMets4
+- Chapter 08 The Timer
+  - 30-DigClock
+  - 31-Clock
 
 There remaining chapters need to be updated or committed. Some of the code is pre-Zig 0.9.1 and in
 need of some TLC.
 
-## 2025/01/06 Notes
-The zigwin32 requires patching to work with Zig 0.14 because of the .Struct -> .@"struct" etc. changes. If you got this far then that should not be too difficult.
+## 2025/01/09 Notes
+zigwin32 requires patching to work with Zig 0.14 because of the .Struct -> .@"struct" etc. changes. If you got this far then that should not be too difficult.
+
+[Windows UTF-8 works for recent releasies of Windows](https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page) allowing Zig to work directly with UTF-8 using the -A APIs rather than doing the WTF-16 dance with the cumbersome -W APIs. Unfortunately some aspects of zigwin32 only work with *.wide* (*UNICODE=true*) and fail with *.ansi* (*UNICODE=false*) and require a simple fix e.g.
+```zig
+const IDI_APPLICATION = win32.typedConst([*:0]align(1) const u8, @as(u32, 32512));
+const IDC_ARROW = win32.typedConst([*:0]align(1) const u8, @as(i32, 32512));
+```
+
 
 # 2022/11/04
 Not much content yet. The Zig (beta) release is at 0.10.0 at the time of writing.
