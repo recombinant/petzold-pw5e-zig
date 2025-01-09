@@ -220,20 +220,24 @@ const Handler = struct {
         defer _ = win32.EndPaint(hwnd, &ps);
 
         //                                          1         2         3         4         5         6
-        //                                012345678901234567890123456789012345678901234567890123456789012
-        const szTop = L("Message        Key       Char     Repeat Scan Ext ALT Prev Tran");
-        const szUnd = L("_______        ___       ____     ______ ____ ___ ___ ____ ____");
+        //                                0123456789012345678901234567890123456789012345678901234567890123
+        const szTop = L("Message         Key       Char     Repeat Scan Ext ALT Prev Tran");
+        const szUnd = L("_______         ___       ____     ______ ____ ___ ___ ____ ____");
 
         _ = windowsx.SelectFont(hdc, windowsx.GetStockFont(win32.SYSTEM_FIXED_FONT));
         _ = win32.SetBkMode(hdc, win32.TRANSPARENT);
         _ = win32.TextOut(hdc, 0, 0, szTop, szTop.len);
         _ = win32.TextOut(hdc, 0, 0, szUnd, szUnd.len);
 
-        const messages = [8][]const u8{
-            "WM_KEYDOWN",    "WM_KEYUP",
-            "WM_CHAR",       "WM_DEADCHAR",
-            "WM_SYSKEYDOWN", "WM_SYSKEYUP",
-            "WM_SYSCHAR",    "WM_SYSDEADCHAR",
+        const messages = [8][]const u16{
+            L("WM_KEYDOWN     "),
+            L("WM_KEYUP       "),
+            L("WM_CHAR        "),
+            L("WM_DEADCHAR    "),
+            L("WM_SYSKEYDOWN  "),
+            L("WM_SYSKEYUP    "),
+            L("WM_SYSCHAR     "),
+            L("WM_SYSDEADCHAR "),
         };
 
         var j: i32 = 0;
@@ -243,41 +247,23 @@ const Handler = struct {
             j += 1;
         }) {
             const msg = node.data;
-            const iType = (msg.message == WM_CHAR or
-                msg.message == WM_SYSCHAR or
-                msg.message == WM_DEADCHAR or
-                msg.message == WM_SYSDEADCHAR);
 
-            // WM_CHAR lParam
-            const lparam: packed struct(u32) {
-                repeat_count: u16,
-                scan_code: u8,
-                extended: u1,
-                _25: u1,
-                _26: u1,
-                _27: u1,
-                _28: u1,
-                context_code: u1,
-                previous_key_state: u1,
-                transistion_state: u1,
-            } = @bitCast(@as(u32, @truncate(@as(usize, @bitCast(msg.lParam)))));
-            const repeat_count = lparam.repeat_count;
-            const scan_code = lparam.scan_code;
-            const extended = if (lparam.extended == 1) "Yes" else "No";
-            const context_code = if (lparam.context_code == 1) "Yes" else "No";
-            const previous_key_state = if (lparam.previous_key_state == 1) "Down" else "Up";
-            const transistion_state = if (lparam.transistion_state == 1) "Up" else "Down";
+            var szBuffer = [_:0]u16{0} ** 128; // for TextOut
 
-            // create the text line as utf-8
-            var buffer: [128]u8 = undefined;
+            // part 1 of 4 in wtf-16
+            const message = messages[msg.message - win32.WM_KEYFIRST];
+            @memcpy(szBuffer[0..message.len], message);
+            var buffer_len = message.len;
+
+            // construct remainder of string in utf-8
+            var buffer: [64]u8 = undefined;
             var stream = std.io.fixedBufferStream(&buffer);
             var writer = stream.writer();
 
-            // part 1 of 3
-            writer.print("{s:<13} ", .{messages[msg.message - win32.WM_KEYFIRST]}) catch unreachable;
-            // part 2 of 3
-            if (iType) {
-                // WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR
+            // part 2 of 4 in utf-8
+            if (msg.message == WM_CHAR or msg.message == WM_SYSCHAR or
+                msg.message == WM_DEADCHAR or msg.message == WM_SYSDEADCHAR)
+            {
                 const char_buffer_wtf16 = [1]u16{@intCast(msg.wParam)};
                 var char_buffer_wtf8: [4]u8 = undefined;
                 const char_len = std.unicode.utf16LeToUtf8(&char_buffer_wtf8, &char_buffer_wtf16) catch unreachable;
@@ -298,24 +284,46 @@ const Handler = struct {
                     .{ msg.wParam, key_name[0..key_name_len] },
                 ) catch unreachable;
             }
-            // part 3 of 3
-            writer.print(
-                " {d:6} {d:4} {s:3} {s:3} {s:4} {s:4}",
-                .{
-                    repeat_count,
-                    scan_code,
-                    extended,
-                    context_code,
-                    previous_key_state,
-                    transistion_state,
-                },
-            ) catch unreachable;
 
-            // convert the line text to unicode
-            var szBuffer = [_:0]u16{0} ** 128;
-            const buffer_len = std.unicode.utf8ToUtf16Le(&szBuffer, stream.getWritten()) catch unreachable;
+            // part 3 of 4 in utf-8
+            // WM_CHAR lParam
+            const lparam: packed struct(u32) {
+                repeat_count: u16,
+                scan_code: u8,
+                extended: u1,
+                _25: u1,
+                _26: u1,
+                _27: u1,
+                _28: u1,
+                context_code: u1,
+                previous_key_state: u1,
+                transistion_state: u1,
+            } = @bitCast(@as(u32, @truncate(@as(usize, @bitCast(msg.lParam)))));
+            const repeat_count = lparam.repeat_count;
+            const scan_code = lparam.scan_code;
+            const extended: []const u16 = if (lparam.extended == 1) L(" Yes") else L(" No ");
+            const context_code: []const u16 = if (lparam.context_code == 1) L(" Yes") else L(" No ");
+            const previous_key_state: []const u16 = if (lparam.previous_key_state == 1) L(" Down") else L(" Up  ");
+            const transistion_state: []const u16 = if (lparam.transistion_state == 1) L(" Up  ") else L(" Down");
+
+            writer.print(" {d:6} {d:4}", .{ repeat_count, scan_code }) catch unreachable;
+
+            // convert the utf-8 line text to wtf-16 appending to szBuffer (after earlier 'message')
+            buffer_len += std.unicode.utf8ToUtf16Le(szBuffer[message.len..], stream.getWritten()) catch unreachable;
+
+            // part 4 of 4 in wtf-16
+            // append the remainer of wtf-16 items to szBuffer
+            @memcpy(szBuffer[buffer_len .. buffer_len + extended.len], extended);
+            buffer_len += extended.len;
+            @memcpy(szBuffer[buffer_len .. buffer_len + context_code.len], context_code);
+            buffer_len += context_code.len;
+            @memcpy(szBuffer[buffer_len .. buffer_len + previous_key_state.len], previous_key_state);
+            buffer_len += previous_key_state.len;
+            @memcpy(szBuffer[buffer_len .. buffer_len + transistion_state.len], transistion_state);
+            buffer_len += transistion_state.len;
+
             const y: i32 = (@divTrunc(self.cyClient, self.cyChar) - 1 - j) * self.cyChar;
-            _ = win32.TextOut(hdc, 0, y, &szBuffer, @intCast(buffer_len));
+            _ = win32.TextOut(hdc, 0, y, &szBuffer, @intCast(message.len + buffer_len));
         }
     }
 
