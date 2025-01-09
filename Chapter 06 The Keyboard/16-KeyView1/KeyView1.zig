@@ -257,7 +257,7 @@ const Handler = struct {
             var writer = stream.writer();
 
             // part 1 of 3
-            writer.print("{s:<13} ", .{messages[pmsg.items[i].message - win32.WM_KEYFIRST]}) catch unreachable;
+            writer.print("{s:<13} ", .{messages[msg - win32.WM_KEYFIRST]}) catch unreachable;
             // part 2 of 3
             if (iType) {
                 // WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR
