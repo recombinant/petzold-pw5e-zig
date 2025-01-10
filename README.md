@@ -32,14 +32,10 @@ The following have been updated to the (near release) Zig 0.14 and a contemporan
 There remaining chapters need to be updated or committed. Some of the code is pre-Zig 0.9.1 and in
 need of some TLC.
 
-## 2025/01/09 Notes
+## 2025/01/10 Notes
 zigwin32 requires patching to work with Zig 0.14 because of the .Struct -> .@"struct" etc. changes. If you got this far then that should not be too difficult.
 
-[Windows UTF-8 works for recent releasies of Windows](https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page) allowing Zig to work directly with UTF-8 using the -A APIs rather than doing the WTF-16 dance with the cumbersome -W APIs. Unfortunately some aspects of zigwin32 only work with *.wide* (*UNICODE=true*) and fail with *.ansi* (*UNICODE=false*) and require a simple fix e.g.
-```zig
-const IDI_APPLICATION = win32.typedConst([*:0]align(1) const u8, @as(u32, 32512));
-const IDC_ARROW = win32.typedConst([*:0]align(1) const u8, @as(i32, 32512));
-```
+[Windows UTF-8 works for recent releasies of Windows](https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page) allowing Zig to work directly with UTF-8 using the -A APIs rather than doing the WTF-16 dance with the cumbersome -W APIs. Unfortunately Zig only allows access to wWinMain and not WinMain so -W and -A APIs need to be mixed as appropriate.
 
 
 # 2022/11/04
