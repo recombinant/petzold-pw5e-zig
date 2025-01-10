@@ -10,8 +10,7 @@
 //                (c) Charles Petzold, 1998
 // ---------------------------------------------------------
 
-// https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page
-pub const UNICODE = false; // use UTF-8
+pub const UNICODE = true;
 
 const std = @import("std");
 
@@ -39,10 +38,6 @@ const LRESULT = win32.LRESULT;
 
 const windowsx = @import("windowsx");
 
-// TODO: 2025/01/09 these is broken in zigwin32 .ansi
-const IDI_APPLICATION = win32.typedConst([*:0]align(1) const u8, @as(u32, 32512));
-const IDC_ARROW = win32.typedConst([*:0]align(1) const u8, @as(i32, 32512));
-
 pub export fn wWinMain(
     hInstance: HINSTANCE,
     _: ?HINSTANCE,
@@ -51,7 +46,7 @@ pub export fn wWinMain(
 ) callconv(WINAPI) c_int {
     _ = pCmdLine;
 
-    const app_name = "StokFont";
+    const app_name = L("StokFont");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
@@ -59,8 +54,8 @@ pub export fn wWinMain(
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = windowsx.GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -84,7 +79,7 @@ pub export fn wWinMain(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
-        "Stock Fonts",
+        L("Stock Fonts"),
         dwStyle,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
@@ -230,7 +225,7 @@ const Handler = struct {
         const cyGrid = tm.tmHeight + 3;
 
         var szFaceName: [win32.LF_FACESIZE:0]u8 = undefined;
-        _ = win32.GetTextFace(hdc, win32.LF_FACESIZE, &szFaceName);
+        _ = win32.GetTextFaceA(hdc, win32.LF_FACESIZE, &szFaceName);
 
         var buffer1: [win32.LF_FACESIZE + 64]u8 = undefined;
         var stream1 = std.io.fixedBufferStream(&buffer1);
@@ -241,7 +236,7 @@ const Handler = struct {
             .{ stockfonts[self.iFont].name, @as([*:0]u8, @ptrCast(&szFaceName)), tm.tmCharSet },
         ) catch unreachable;
         const written1 = stream1.getWritten();
-        _ = win32.TextOut(hdc, 0, 0, @ptrCast(written1), @intCast(written1.len));
+        _ = win32.TextOutA(hdc, 0, 0, @ptrCast(written1), @intCast(written1.len));
 
         _ = win32.SetTextAlign(hdc, @enumFromInt(@intFromEnum(win32.TA_TOP) | @intFromEnum(win32.TA_CENTER)));
 
@@ -249,12 +244,11 @@ const Handler = struct {
 
         var i: i32 = 0;
         while (i <= 16) : (i += 1) {
-            if (i < 9) {
-                _ = win32.MoveToEx(hdc, (i + 2) * cxGrid, 2 * cyGrid, null);
-                _ = win32.LineTo(hdc, (i + 2) * cxGrid, 19 * cyGrid);
-            }
+            _ = win32.MoveToEx(hdc, (i + 2) * cxGrid, 2 * cyGrid, null);
+            _ = win32.LineTo(hdc, (i + 2) * cxGrid, 19 * cyGrid);
+
             _ = win32.MoveToEx(hdc, cxGrid, (i + 3) * cyGrid, null);
-            _ = win32.LineTo(hdc, 10 * cxGrid, (i + 3) * cyGrid);
+            _ = win32.LineTo(hdc, 18 * cxGrid, (i + 3) * cyGrid);
         }
 
         // vertical and horizontal headings
@@ -265,38 +259,37 @@ const Handler = struct {
 
         i = 0;
         while (i < 16) : (i += 1) {
-            if (i < 8) {
-                stream2.reset();
-                writer2.print("{X}-", .{i}) catch unreachable;
-                const written2 = stream2.getWritten();
-                _ = win32.TextOut(
-                    hdc,
-                    (2 * i + 5) * @divTrunc(cxGrid, 2),
-                    2 * cyGrid + 2,
-                    @ptrCast(written2),
-                    @intCast(written2.len),
-                );
-            }
             stream2.reset();
-            writer2.print("-{X}", .{i}) catch unreachable;
+            writer2.print("{X}-", .{i}) catch unreachable;
             const written2 = stream2.getWritten();
-            _ = win32.TextOut(
+            _ = win32.TextOutA(
                 hdc,
-                3 * @divTrunc(cxGrid, 2),
-                (i + 3) * cyGrid + 2,
+                (2 * i + 5) * @divTrunc(cxGrid, 2),
+                2 * cyGrid + 2,
                 @ptrCast(written2),
                 @intCast(written2.len),
             );
+
+            stream2.reset();
+            writer2.print("-{X}", .{i}) catch unreachable;
+            const written3 = stream2.getWritten();
+            _ = win32.TextOutA(
+                hdc,
+                3 * @divTrunc(cxGrid, 2),
+                (i + 3) * cyGrid + 2,
+                @ptrCast(written3),
+                @intCast(written3.len),
+            );
         }
 
-        // ASCII characters
+        // UTF-16 characters
 
         var y: i32 = 0;
         while (y < 16) : (y += 1) {
             var x: i32 = 0;
-            while (x < 8) : (x += 1) {
-                const c: u8 = @intCast(16 * x + y);
-                _ = win32.TextOut(
+            while (x < 16) : (x += 1) {
+                const c: u16 = @intCast(16 * x + y);
+                _ = win32.TextOutW(
                     hdc,
                     (2 * x + 5) * @divTrunc(cxGrid, 2),
                     (y + 3) * cyGrid + 2,
