@@ -18,6 +18,8 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addImport("zigwin32", zigwin32);
     exe.root_module.addImport("windowsx", windowsx);
+    // The rc file includes the manifest for enabling UTF-8 codepage on later Windows versions
+    exe.root_module.addWin32ResourceFile(.{ .file = b.path("KeyView1.rc") });
 
     b.installArtifact(exe);
 

@@ -9,6 +9,7 @@
 //  KEYVIEW1.C -- Displays Keyboard and Character Messages
 //                (c) Charles Petzold, 1998
 // --------------------------------------------------------
+
 pub const UNICODE = true;
 
 const std = @import("std");
@@ -17,6 +18,7 @@ const WINAPI = std.os.windows.WINAPI;
 
 const win32 = struct {
     usingnamespace @import("zigwin32").zig;
+    // usingnamespace @import("zigwin32").globalization;
     usingnamespace @import("zigwin32").system.library_loader;
     usingnamespace @import("zigwin32").foundation;
     usingnamespace @import("zigwin32").ui.windows_and_messaging;
@@ -221,24 +223,22 @@ const Handler = struct {
 
         //                                          1         2         3         4         5         6
         //                                0123456789012345678901234567890123456789012345678901234567890123
-        const szTop = L("Message         Key       Char     Repeat Scan Ext ALT Prev Tran");
-        const szUnd = L("_______         ___       ____     ______ ____ ___ ___ ____ ____");
+        const szTop = "Message         Key       Char     Repeat Scan Ext ALT Prev Tran";
+        const szUnd = "_______         ___       ____     ______ ____ ___ ___ ____ ____";
 
         _ = windowsx.SelectFont(hdc, windowsx.GetStockFont(win32.SYSTEM_FIXED_FONT));
         _ = win32.SetBkMode(hdc, win32.TRANSPARENT);
-        _ = win32.TextOut(hdc, 0, 0, szTop, szTop.len);
-        _ = win32.TextOut(hdc, 0, 0, szUnd, szUnd.len);
+        _ = win32.TextOutA(hdc, 0, 0, szTop, szTop.len);
+        _ = win32.TextOutA(hdc, 0, 0, szUnd, szUnd.len);
 
-        const messages = [8][]const u16{
-            L("WM_KEYDOWN     "),
-            L("WM_KEYUP       "),
-            L("WM_CHAR        "),
-            L("WM_DEADCHAR    "),
-            L("WM_SYSKEYDOWN  "),
-            L("WM_SYSKEYUP    "),
-            L("WM_SYSCHAR     "),
-            L("WM_SYSDEADCHAR "),
+        const messages = [8][]const u8{
+            "WM_KEYDOWN",    "WM_KEYUP",
+            "WM_CHAR",       "WM_DEADCHAR",
+            "WM_SYSKEYDOWN", "WM_SYSKEYUP",
+            "WM_SYSCHAR",    "WM_SYSDEADCHAR",
         };
+
+        const limit = @min(@as(i32, @intCast(msg_list.len)), @divTrunc(self.cyClient, self.cyChar) - 1);
 
         var j: i32 = 0;
         var it = msg_list.first;
@@ -246,46 +246,17 @@ const Handler = struct {
             it = node.next;
             j += 1;
         }) {
+            if (j >= limit)
+                break;
+
             const msg = node.data;
 
-            var szBuffer = [_:0]u16{0} ** 128; // for TextOut
-
-            // part 1 of 4 in wtf-16
-            const message = messages[msg.message - win32.WM_KEYFIRST];
-            @memcpy(szBuffer[0..message.len], message);
-            var buffer_len = message.len;
-
-            // construct remainder of string in utf-8
-            var buffer: [64]u8 = undefined;
+            var buffer: [128]u8 = undefined;
             var stream = std.io.fixedBufferStream(&buffer);
-            var writer = stream.writer();
+            const writer = stream.writer();
 
-            // part 2 of 4 in utf-8
-            if (msg.message == WM_CHAR or msg.message == WM_SYSCHAR or
-                msg.message == WM_DEADCHAR or msg.message == WM_SYSDEADCHAR)
-            {
-                const char_buffer_wtf16 = [1]u16{@intCast(msg.wParam)};
-                var char_buffer_wtf8: [4]u8 = undefined;
-                const char_len = std.unicode.utf16LeToUtf8(&char_buffer_wtf8, &char_buffer_wtf16) catch unreachable;
-                writer.print(
-                    "           0x{x:0>4} {s:1}",
-                    .{ msg.wParam, char_buffer_wtf8[0..char_len] },
-                ) catch unreachable;
-            } else {
-                // WM_KEYUP, WM_KEYDOWN
-                var szKeyName = [_:0]u16{0} ** 32;
-                // TODO: rather than utf16->utf8->utf16 szKeyName could be inserted into szBuffer at output
-                const len = win32.GetKeyNameText(@truncate(msg.lParam), &szKeyName, szKeyName.len);
-                var key_name: [32]u8 = undefined;
-                const key_name_len = std.unicode.utf16LeToUtf8(&key_name, szKeyName[0..@intCast(len)]) catch unreachable;
-                //
-                writer.print(
-                    "{d:3} {s:<15}",
-                    .{ msg.wParam, key_name[0..key_name_len] },
-                ) catch unreachable;
-            }
+            const message = messages[msg.message - win32.WM_KEYFIRST];
 
-            // part 3 of 4 in utf-8
             // WM_CHAR lParam
             const lparam: packed struct(u32) {
                 repeat_count: u16,
@@ -301,29 +272,47 @@ const Handler = struct {
             } = @bitCast(@as(u32, @truncate(@as(usize, @bitCast(msg.lParam)))));
             const repeat_count = lparam.repeat_count;
             const scan_code = lparam.scan_code;
-            const extended: []const u16 = if (lparam.extended == 1) L(" Yes") else L(" No ");
-            const context_code: []const u16 = if (lparam.context_code == 1) L(" Yes") else L(" No ");
-            const previous_key_state: []const u16 = if (lparam.previous_key_state == 1) L(" Down") else L(" Up  ");
-            const transistion_state: []const u16 = if (lparam.transistion_state == 1) L(" Up  ") else L(" Down");
+            const extended: []const u8 = if (lparam.extended == 1) "Yes" else "No";
+            const context_code: []const u8 = if (lparam.context_code == 1) "Yes" else "No";
+            const previous_key_state: []const u8 = if (lparam.previous_key_state == 1) "Down" else "Up";
+            const transistion_state: []const u8 = if (lparam.transistion_state == 1) "Up" else "Down";
 
-            writer.print(" {d:6} {d:4}", .{ repeat_count, scan_code }) catch unreachable;
+            if (msg.message == WM_CHAR or msg.message == WM_SYSCHAR or
+                msg.message == WM_DEADCHAR or msg.message == WM_SYSDEADCHAR)
+            {
+                var c8buffer: [8]u8 = undefined;
+                const c8string = toUtf8(&c8buffer, msg.wParam);
 
-            // convert the utf-8 line text to wtf-16 appending to szBuffer (after earlier 'message')
-            buffer_len += std.unicode.utf8ToUtf16Le(szBuffer[message.len..], stream.getWritten()) catch unreachable;
+                writer.print(
+                    "{s:<15}           0x{x:0>4} {s} {d:6} {d:4} {s:<3} {s:<3} {s:<4} {s:<4}",
+                    .{
+                        message,      msg.wParam,         c8string,
+                        repeat_count, scan_code,          extended,
+                        context_code, previous_key_state, transistion_state,
+                    },
+                ) catch unreachable;
+            } else {
+                // WM_KEYUP, WM_KEYDOWN
+                var key_name = [_:0]u8{0} ** 32;
+                const key_name_len: usize = @intCast(win32.GetKeyNameTextA(@truncate(msg.lParam), &key_name, key_name.len));
+                //
+                writer.print(
+                    "{s:<15}{d:3} {s:<15} {d:6} {d:4} {s:<3} {s:<3} {s:<4} {s:<4}",
+                    .{
+                        message,      msg.wParam,         key_name[0..key_name_len],
+                        repeat_count, scan_code,          extended,
+                        context_code, previous_key_state, transistion_state,
+                    },
+                ) catch unreachable;
+            }
+            const written = stream.getWritten();
 
-            // part 4 of 4 in wtf-16
-            // append the remainer of wtf-16 items to szBuffer
-            @memcpy(szBuffer[buffer_len .. buffer_len + extended.len], extended);
-            buffer_len += extended.len;
-            @memcpy(szBuffer[buffer_len .. buffer_len + context_code.len], context_code);
-            buffer_len += context_code.len;
-            @memcpy(szBuffer[buffer_len .. buffer_len + previous_key_state.len], previous_key_state);
-            buffer_len += previous_key_state.len;
-            @memcpy(szBuffer[buffer_len .. buffer_len + transistion_state.len], transistion_state);
-            buffer_len += transistion_state.len;
+            var text: [128]u16 = undefined;
+            // const text_len = win32.MultiByteToWideChar(win32.CP_UTF8, win32.MULTI_BYTE_TO_WIDE_CHAR_FLAGS{}, @ptrCast(written), @intCast(written.len), @ptrCast(&text), @intCast(text.len));
+            const text_len = std.unicode.utf8ToUtf16Le(text[0..], written) catch unreachable;
 
             const y: i32 = (@divTrunc(self.cyClient, self.cyChar) - 1 - j) * self.cyChar;
-            _ = win32.TextOut(hdc, 0, y, &szBuffer, @intCast(message.len + buffer_len));
+            _ = win32.TextOutW(hdc, 0, y, @ptrCast(&text), @intCast(text_len));
         }
     }
 
@@ -331,6 +320,23 @@ const Handler = struct {
         win32.PostQuitMessage(0);
     }
 };
+
+// w_param is 4 character utf-16. Convert to utf-8.
+fn toUtf8(output: []u8, w_param: WPARAM) []const u8 {
+    std.debug.assert(output.len >= 8); // 8 bytes is correct
+    if (w_param < ' ') {
+        output[0] = ' ';
+        return output[0..1];
+    }
+    const c16: [4]u16 = @bitCast(w_param);
+    var n: usize = 0;
+    for (c16, 1..) |c, i| {
+        if (c != 0)
+            n = i;
+    }
+    const len = std.unicode.utf16LeToUtf8(output, c16[0..n]) catch unreachable;
+    return output[0..len];
+}
 
 const WM_CREATE = win32.WM_CREATE;
 const WM_DISPLAYCHANGE = win32.WM_DISPLAYCHANGE;
