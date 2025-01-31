@@ -7,7 +7,7 @@
 //  SYSMETS.H -- System metrics display structure
 // -----------------------------------------------
 
-const win32 = @import("zigwin32").ui.windows_and_messaging;
+const win32 = @import("win32").ui.windows_and_messaging;
 
 const SystemMetrics = struct {
     index: win32.SYSTEM_METRICS_INDEX,

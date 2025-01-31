@@ -15,8 +15,8 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.root_module.addImport(
-        "zigwin32",
-        b.dependency("zigwin32", .{}).module("zigwin32"),
+        "win32",
+        b.dependency("win32", .{}).module("win32"),
     );
 
     b.installArtifact(exe);

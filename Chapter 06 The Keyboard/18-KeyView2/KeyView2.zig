@@ -1,12 +1,12 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 6 - KeyView1
+// Chapter 6 - KeyView2
 //
 // The original source code copyright:
 //
 // --------------------------------------------------------
-//  KEYVIEW1.C -- Displays Keyboard and Character Messages
+//  KEYVIEW2.C -- Displays Keyboard and Character Messages
 //                (c) Charles Petzold, 1998
 // --------------------------------------------------------
 
@@ -17,13 +17,13 @@ const std = @import("std");
 const WINAPI = std.os.windows.WINAPI;
 
 const win32 = struct {
-    usingnamespace @import("zigwin32").zig;
-    // usingnamespace @import("zigwin32").globalization;
-    usingnamespace @import("zigwin32").system.library_loader;
-    usingnamespace @import("zigwin32").foundation;
-    usingnamespace @import("zigwin32").ui.windows_and_messaging;
-    usingnamespace @import("zigwin32").graphics.gdi;
-    usingnamespace @import("zigwin32").ui.input.keyboard_and_mouse;
+    usingnamespace @import("win32").zig;
+    // usingnamespace @import("win32").globalization;
+    usingnamespace @import("win32").system.library_loader;
+    usingnamespace @import("win32").foundation;
+    usingnamespace @import("win32").ui.windows_and_messaging;
+    usingnamespace @import("win32").graphics.gdi;
+    usingnamespace @import("win32").ui.input.keyboard_and_mouse;
 };
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
@@ -50,7 +50,7 @@ pub export fn wWinMain(
 ) callconv(WINAPI) c_int {
     _ = pCmdLine;
 
-    const app_name = L("KeyView1");
+    const app_name = L("KeyView2");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
@@ -79,7 +79,7 @@ pub export fn wWinMain(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
-        L("Keyboard Message Viewer #1"),
+        L("Keyboard Message Viewer #2"),
         win32.WS_OVERLAPPEDWINDOW,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
@@ -132,6 +132,7 @@ var msg_node_pool = MsgNodePool.init(std.heap.page_allocator);
 var msg_list = MsgList{};
 
 const Handler = struct {
+    dwCharSet: u32 = win32.DEFAULT_CHARSET,
     cxClientMax: i32 = undefined,
     cyClientMax: i32 = undefined,
     cxChar: i32 = undefined,

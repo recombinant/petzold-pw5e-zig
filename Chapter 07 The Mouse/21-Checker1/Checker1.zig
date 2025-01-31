@@ -25,7 +25,6 @@ const win32 = struct {
 };
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
-const TRUE = win32.TRUE;
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
 const MSG = win32.MSG;
@@ -34,15 +33,13 @@ const HDC = win32.HDC;
 const LPARAM = win32.LPARAM;
 const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
-const POINT = win32.POINT;
 const CW_USEDEFAULT = win32.CW_USEDEFAULT;
 const WM_SIZE = win32.WM_SIZE;
 const WM_LBUTTONDOWN = win32.WM_LBUTTONDOWN;
 const WM_PAINT = win32.WM_PAINT;
 const WM_DESTROY = win32.WM_DESTROY;
-const SendMessage = win32.SendMessage;
 
-const windowsx = @import("windowsx").windowsx;
+const windowsx = @import("windowsx");
 const GetStockBrush = windowsx.GetStockBrush;
 const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
 const HANDLE_WM_LBUTTONDOWN = windowsx.HANDLE_WM_LBUTTONDOWN;
@@ -60,13 +57,13 @@ pub export fn wWinMain(
     const app_name = L("Checker1");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
-        .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
+        .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.HICON, win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
-        .hCursor = @ptrCast(win32.HCURSOR, win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -75,25 +72,19 @@ pub export fn wWinMain(
 
     const atom: u16 = win32.RegisterClassEx(&wndclassex);
     if (0 == atom) {
-        std.debug.print("failed RegisterClassEx()", .{});
+        std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
     }
 
-    // If a memory align panic occurs then the CreateWindowExW() Zig declaration
-    // needs to have align(1) added to the lpClassName parameter.
-    //   lpClassName: ?[*:0]align(1) const u16,
-    //                      ^^^^^^^^
+    // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
-    const lpClassName = @intToPtr([*:0]align(1) const u16, atom);
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        win32.WINDOW_EX_STYLE.initFlags(.{}),
-        lpClassName,
+        win32.WINDOW_EX_STYLE{},
+        @ptrFromInt(atom),
         L("Checker1 Mouse Hit-Test Demo"),
-        win32.WINDOW_STYLE.initFlags(.{
-            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
-        }),
+        win32.WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
@@ -105,13 +96,13 @@ pub export fn wWinMain(
     );
 
     if (null == hwnd) {
-        std.debug.print("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
-    _ = win32.ShowWindow(hwnd, @intToEnum(win32.SHOW_WINDOW_CMD, nCmdShow));
+    _ = win32.ShowWindow(hwnd, @bitCast(nCmdShow));
     if (0 == win32.UpdateWindow(hwnd)) {
-        std.debug.print("failed UpdateWindow()", .{});
+        std.log.err("failed UpdateWindow()", .{});
         return 0; // premature exit
     }
 
@@ -122,7 +113,7 @@ pub export fn wWinMain(
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.debug.print("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
@@ -132,7 +123,7 @@ pub export fn wWinMain(
     }
 
     // Normal exit
-    return @bitCast(c_int, @truncate(c_uint, msg.wParam)); // WM_QUIT
+    return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
 const Handler = struct {
@@ -151,8 +142,8 @@ const Handler = struct {
         const y = @divTrunc(yMouse, self.cyBlock);
 
         if (x < DIVISIONS and y < DIVISIONS) {
-            const i = @intCast(usize, x);
-            const j = @intCast(usize, y);
+            const i = @as(usize, @intCast(x));
+            const j = @as(usize, @intCast(y));
             self.fState[i][j] = !self.fState[i][j];
 
             var rect: win32.RECT = undefined;
@@ -171,16 +162,14 @@ const Handler = struct {
     pub fn OnPaint(self: *Handler, hwnd: HWND) void {
         var ps: win32.PAINTSTRUCT = undefined;
         const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
-        defer {
-            _ = win32.EndPaint(hwnd, &ps);
-        }
+        defer _ = win32.EndPaint(hwnd, &ps);
 
         var i: usize = 0;
         while (i < DIVISIONS) : (i += 1) {
-            const x = @intCast(i32, i);
+            const x = @as(i32, @intCast(i));
             var j: usize = 0;
             while (j < DIVISIONS) : (j += 1) {
-                const y = @intCast(i32, j);
+                const y = @as(i32, @intCast(j));
                 _ = win32.Rectangle(
                     hdc,
                     x * self.cxBlock,
@@ -204,19 +193,21 @@ const Handler = struct {
     }
 };
 
-var handler = Handler{};
-
 fn WndProc(
     hwnd: HWND,
     message: u32,
     wParam: WPARAM,
     lParam: LPARAM,
 ) callconv(WINAPI) LRESULT {
+    const state = struct {
+        var handler = Handler{};
+    };
+
     return switch (message) {
-        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
-        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwnd, wParam, lParam, Handler, &handler),
-        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
         else => win32.DefWindowProc(hwnd, message, wParam, lParam),
     };
 }

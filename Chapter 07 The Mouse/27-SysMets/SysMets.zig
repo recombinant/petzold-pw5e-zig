@@ -44,7 +44,7 @@ const LRESULT = win32.LRESULT;
 const CREATESTRUCT = win32.CREATESTRUCT;
 const SCROLLINFO = win32.SCROLLINFO;
 const SCROLLINFO_MASK = win32.SCROLLINFO_MASK;
-const SIF_POS = win32.SIF_POS;
+const SIF_POS = win32.POS;
 const CW_USEDEFAULT = win32.CW_USEDEFAULT;
 const SB_VERT = win32.SB_VERT;
 const SB_HORZ = win32.SB_HORZ;
@@ -54,9 +54,6 @@ const SB_PAGEUP = win32.SB_PAGEUP;
 const SB_PAGEDOWN = win32.SB_PAGEDOWN;
 const SB_LINEUP = win32.SB_LINEUP;
 const SB_LINEDOWN = win32.SB_LINEDOWN;
-const TA_TOP = @enumToInt(win32.TA_TOP);
-const TA_LEFT = @enumToInt(win32.TA_LEFT);
-const TA_RIGHT = @enumToInt(win32.TA_RIGHT);
 const VIRTUAL_KEY = win32.VIRTUAL_KEY;
 const VK_HOME = win32.VK_HOME;
 const VK_END = win32.VK_END;
@@ -66,31 +63,10 @@ const VK_UP = win32.VK_UP;
 const VK_DOWN = win32.VK_DOWN;
 const VK_LEFT = win32.VK_LEFT;
 const VK_RIGHT = win32.VK_RIGHT;
-const WS_OVERLAPPEDWINDOW = @enumToInt(win32.WS_OVERLAPPEDWINDOW);
-const WS_VSCROLL = @enumToInt(win32.WS_VSCROLL);
-const WS_HSCROLL = @enumToInt(win32.WS_HSCROLL);
-const WM_CREATE = win32.WM_CREATE;
-const WM_SIZE = win32.WM_SIZE;
-const WM_HSCROLL = win32.WM_HSCROLL;
-const WM_VSCROLL = win32.WM_VSCROLL;
-const WM_MOUSEWHEEL = win32.WM_MOUSEWHEEL;
-const WM_SETTINGCHANGE = win32.WM_SETTINGCHANGE;
-const WM_KEYDOWN = win32.WM_KEYDOWN;
-const WM_PAINT = win32.WM_PAINT;
-const WM_DESTROY = win32.WM_DESTROY;
 const SendMessage = win32.SendMessage;
 
-const windowsx = @import("windowsx").windowsx;
+const windowsx = @import("windowsx");
 const GetStockBrush = windowsx.GetStockBrush;
-const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
-const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
-const HANDLE_WM_HSCROLL = windowsx.HANDLE_WM_HSCROLL;
-const HANDLE_WM_VSCROLL = windowsx.HANDLE_WM_VSCROLL;
-const HANDLE_WM_MOUSEWHEEL = windowsx.HANDLE_WM_MOUSEWHEEL;
-const HANDLE_WM_SETTINGCHANGE = windowsx.HANDLE_WM_SETTINGCHANGE;
-const HANDLE_WM_KEYDOWN = windowsx.HANDLE_WM_KEYDOWN;
-const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
-const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 const FORWARD_WM_VSCROLL = windowsx.FORWARD_WM_VSCROLL;
 const FORWARD_WM_HSCROLL = windowsx.FORWARD_WM_HSCROLL;
 
@@ -105,13 +81,13 @@ pub export fn wWinMain(
     const app_name = L("SysMets");
     const wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
-        .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
+        .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.HICON, win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
-        .hCursor = @ptrCast(win32.HCURSOR, win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -120,23 +96,24 @@ pub export fn wWinMain(
 
     const atom: u16 = win32.RegisterClassEx(&wndclassex);
     if (0 == atom) {
-        std.debug.print("failed RegisterClassEx()", .{});
+        std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
     }
 
-    // If a memory align panic occurs then the CreateWindowExW() Zig declaration
-    // needs to have align(1) added to the lpClassName parameter.
-    //   lpClassName: ?[*:0]align(1) const u16,
-    //                      ^^^^^^^^
+    const ws_overlapped_window: u32 = @bitCast(win32.WS_OVERLAPPEDWINDOW);
+    const ws_vscroll: u32 = @bitCast(win32.WS_VSCROLL);
+    const ws_hscroll: u32 = @bitCast(win32.WS_HSCROLL);
+    const dwStyle: win32.WINDOW_STYLE = @bitCast(ws_overlapped_window | ws_vscroll | ws_hscroll);
+
+    // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
-    const lpClassName = @intToPtr([*:0]align(1) const u16, atom);
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        win32.WINDOW_EX_STYLE.initFlags(.{}),
-        lpClassName,
+        win32.WINDOW_EX_STYLE{},
+        @ptrFromInt(atom),
         L("Get System Metrics"),
-        @intToEnum(win32.WINDOW_STYLE, WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL),
+        comptime dwStyle,
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
@@ -148,13 +125,13 @@ pub export fn wWinMain(
     );
 
     if (null == hwnd) {
-        std.debug.print("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
-    _ = win32.ShowWindow(hwnd, @intToEnum(win32.SHOW_WINDOW_CMD, nCmdShow));
+    _ = win32.ShowWindow(hwnd, @bitCast(nCmdShow));
     if (0 == win32.UpdateWindow(hwnd)) {
-        std.debug.print("failed UpdateWindow()", .{});
+        std.log.err("failed UpdateWindow()", .{});
         return 0; // premature exit
     }
 
@@ -165,7 +142,7 @@ pub export fn wWinMain(
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.debug.print("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
@@ -175,7 +152,7 @@ pub export fn wWinMain(
     }
 
     // Normal exit
-    return @bitCast(c_int, @truncate(c_uint, msg.wParam)); // WM_QUIT
+    return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
 const Handler = struct {
@@ -191,9 +168,7 @@ const Handler = struct {
     pub fn OnCreate(self: *Handler, hwnd: HWND, _: *CREATESTRUCT) LRESULT {
         {
             const hdc = win32.GetDC(hwnd);
-            defer {
-                _ = win32.ReleaseDC(hwnd, hdc);
-            }
+            defer _ = win32.ReleaseDC(hwnd, hdc);
 
             var tm: win32.TEXTMETRIC = undefined;
             _ = win32.GetTextMetrics(hdc, &tm);
@@ -221,14 +196,14 @@ const Handler = struct {
 
         var ulScrollLines: u32 = undefined; // for mouse wheel logic
 
-        const fWinIni = win32.SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS.initFlags(.{});
+        const fWinIni = win32.SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS{};
         _ = win32.SystemParametersInfo(win32.SPI_GETWHEELSCROLLLINES, 0, &ulScrollLines, fWinIni);
 
         // ulScrollLines usually equals 3 or 0 (for no scrolling)
         // WHEEL_DELTA equals 120, so iDeltaPerLine will be 40
 
         if (ulScrollLines != 0) {
-            self.iDeltaPerLine = @intCast(i32, @divTrunc(win32.WHEEL_DELTA, ulScrollLines));
+            self.iDeltaPerLine = @intCast(@divTrunc(win32.WHEEL_DELTA, ulScrollLines));
         } else {
             self.iDeltaPerLine = 0;
         }
@@ -242,10 +217,10 @@ const Handler = struct {
         {
             var si = SCROLLINFO{
                 .cbSize = @sizeOf(SCROLLINFO),
-                .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
+                .fMask = SCROLLINFO_MASK{ .RANGE = 1, .PAGE = 1 },
                 .nMin = 0,
                 .nMax = num_lines - 1,
-                .nPage = @intCast(u32, @divTrunc(self.cyClient, self.cyChar)),
+                .nPage = @intCast(@divTrunc(self.cyClient, self.cyChar)),
                 .nPos = undefined,
                 .nTrackPos = undefined,
             };
@@ -256,10 +231,10 @@ const Handler = struct {
         {
             var si = SCROLLINFO{
                 .cbSize = @sizeOf(SCROLLINFO),
-                .fMask = SCROLLINFO_MASK.initFlags(.{ .RANGE = 1, .PAGE = 1 }),
+                .fMask = SCROLLINFO_MASK{ .RANGE = 1, .PAGE = 1 },
                 .nMin = 0,
                 .nMax = 2 + @divTrunc(self.max_column_width, self.cxChar),
-                .nPage = @intCast(u32, @divTrunc(self.cxClient, self.cxChar)),
+                .nPage = @intCast(@divTrunc(self.cxClient, self.cxChar)),
                 .nPos = undefined,
                 .nTrackPos = undefined,
             };
@@ -271,7 +246,7 @@ const Handler = struct {
         // Get all the vertical scroll bar information
         var si = SCROLLINFO{
             .cbSize = @sizeOf(SCROLLINFO),
-            .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
+            .fMask = win32.SIF_ALL,
             .nMin = undefined,
             .nMax = undefined,
             .nPage = undefined,
@@ -289,8 +264,8 @@ const Handler = struct {
             win32.SB_BOTTOM => si.nPos = si.nMax,
             win32.SB_LINEUP => si.nPos -= 1,
             win32.SB_LINEDOWN => si.nPos += 1,
-            win32.SB_PAGEUP => si.nPos -= @intCast(i32, si.nPage),
-            win32.SB_PAGEDOWN => si.nPos += @intCast(i32, si.nPage),
+            win32.SB_PAGEUP => si.nPos -= @as(i32, @intCast(si.nPage)),
+            win32.SB_PAGEDOWN => si.nPos += @as(i32, @intCast(si.nPage)),
             win32.SB_THUMBTRACK => si.nPos = si.nTrackPos,
             else => {},
         }
@@ -314,7 +289,7 @@ const Handler = struct {
         // Get all the horizontal scroll bar information
         var si = SCROLLINFO{
             .cbSize = @sizeOf(SCROLLINFO),
-            .fMask = SCROLLINFO_MASK.initFlags(.{ .ALL = 1 }),
+            .fMask = win32.SIF_ALL,
             .nMin = undefined,
             .nMax = undefined,
             .nPage = undefined,
@@ -325,13 +300,13 @@ const Handler = struct {
         // Save the position for comparison later on
 
         _ = win32.GetScrollInfo(hwnd, SB_HORZ, &si);
-        var iHorzPos = si.nPos;
+        const iHorzPos = si.nPos;
 
         switch (code) {
             win32.SB_LINELEFT => si.nPos -= 1,
             win32.SB_LINERIGHT => si.nPos += 1,
-            win32.SB_PAGELEFT => si.nPos -= @intCast(i32, si.nPage),
-            win32.SB_PAGERIGHT => si.nPos += @intCast(i32, si.nPage),
+            win32.SB_PAGELEFT => si.nPos -= @as(i32, @intCast(si.nPage)),
+            win32.SB_PAGERIGHT => si.nPos += @as(i32, @intCast(si.nPage)),
             win32.SB_THUMBPOSITION => si.nPos = si.nTrackPos,
             else => {},
         }
@@ -384,13 +359,11 @@ const Handler = struct {
     pub fn OnPaint(self: *Handler, hwnd: HWND) void {
         var ps: win32.PAINTSTRUCT = undefined;
         const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
-        defer {
-            _ = win32.EndPaint(hwnd, &ps);
-        }
+        defer _ = win32.EndPaint(hwnd, &ps);
 
         var si = SCROLLINFO{
             .cbSize = @sizeOf(SCROLLINFO),
-            .fMask = SCROLLINFO_MASK.initFlags(.{ .POS = 1 }),
+            .fMask = SCROLLINFO_MASK{ .POS = 1 },
             .nMin = undefined,
             .nMax = undefined,
             .nPage = undefined,
@@ -407,15 +380,18 @@ const Handler = struct {
         const iHorzPos = si.nPos;
 
         // Find painting limits
-        const iPaintBeg = @maximum(0, iVertPos + @divTrunc(ps.rcPaint.top, self.cyChar));
-        const iPaintEnd = @minimum(num_lines - 1, iVertPos + @divTrunc(ps.rcPaint.bottom, self.cyChar));
+        const iPaintBeg = @max(0, iVertPos + @divTrunc(ps.rcPaint.top, self.cyChar));
+        const iPaintEnd = @min(num_lines - 1, iVertPos + @divTrunc(ps.rcPaint.bottom, self.cyChar));
 
-        const flagsL = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_LEFT | TA_TOP);
-        const flagsR = @intToEnum(win32.TEXT_ALIGN_OPTIONS, TA_RIGHT | TA_TOP);
+        const TA_LEFT = @intFromEnum(win32.TA_LEFT);
+        const TA_RIGHT = @intFromEnum(win32.TA_RIGHT);
+        const TA_TOP = @intFromEnum(win32.TA_TOP);
+        const flagsL: win32.TEXT_ALIGN_OPTIONS = @enumFromInt(TA_LEFT | TA_TOP);
+        const flagsR: win32.TEXT_ALIGN_OPTIONS = @enumFromInt(TA_RIGHT | TA_TOP);
 
         var i = iPaintBeg;
         while (i <= iPaintEnd) : (i += 1) {
-            const metric = sysmetrics[@intCast(usize, i)];
+            const metric = sysmetrics[@intCast(i)];
 
             const x = self.cxChar * (1 - iHorzPos);
             const y = self.cyChar * (i - iVertPos);
@@ -423,27 +399,33 @@ const Handler = struct {
             // Convert text to Windows UTF16
 
             var label: [buffer_sizes.label]u16 = [_]u16{0} ** buffer_sizes.label;
-            var label_len: i32 = @intCast(i32, std.unicode.utf8ToUtf16Le(label[0..], metric.label) catch unreachable);
+            const label_len: i32 = @intCast(std.unicode.utf8ToUtf16Le(label[0..], metric.label) catch unreachable);
 
             var description: [buffer_sizes.description]u16 = [_]u16{0} ** buffer_sizes.description;
-            var description_len = @intCast(i32, std.unicode.utf8ToUtf16Le(description[0..], metric.description) catch unreachable);
+            const description_len: i32 = @intCast(std.unicode.utf8ToUtf16Le(description[0..], metric.description) catch unreachable);
 
+            // Do the merry dance to remove the + sign when printing positive signed integers on Zig 0.12.0
             var buffer2: [6]u8 = [_]u8{0} ** 6;
-            const slice2 = std.fmt.bufPrint(buffer2[0..], "{d:5}", .{win32.GetSystemMetrics(metric.index)}) catch unreachable;
-
+            const slice2 = blk: {
+                const value = win32.GetSystemMetrics(metric.index);
+                if (value >= 0)
+                    break :blk std.fmt.bufPrint(buffer2[0..], "{d:5}", .{@as(u32, @intCast(value))}) catch unreachable
+                else
+                    break :blk std.fmt.bufPrint(buffer2[0..], "{d:5}", .{value}) catch unreachable;
+            };
             var index: [6]u16 = [_]u16{0} ** 6;
-            var index_len = @intCast(i32, std.unicode.utf8ToUtf16Le(index[0..], slice2) catch unreachable);
+            const index_len: i32 = @intCast(std.unicode.utf8ToUtf16Le(index[0..], slice2) catch unreachable);
 
             // Output text
 
             _ = win32.SetTextAlign(hdc, flagsL);
 
-            _ = win32.TextOut(hdc, x, y, &label, label_len);
-            _ = win32.TextOut(hdc, x + 22 * self.cxCaps, y, &description, description_len);
+            _ = win32.TextOut(hdc, x, y, @ptrCast(&label), label_len);
+            _ = win32.TextOut(hdc, x + 22 * self.cxCaps, y, @ptrCast(&description), description_len);
 
             _ = win32.SetTextAlign(hdc, flagsR);
 
-            _ = win32.TextOut(hdc, x + 22 * self.cxCaps + 40 * self.cxChar, y, &index, index_len);
+            _ = win32.TextOut(hdc, x + 22 * self.cxCaps + 40 * self.cxChar, y, @ptrCast(&index), index_len);
         }
     }
 
@@ -452,7 +434,24 @@ const Handler = struct {
     }
 };
 
-var handler = Handler{};
+const WM_CREATE = win32.WM_CREATE;
+const WM_SIZE = win32.WM_SIZE;
+const WM_HSCROLL = win32.WM_HSCROLL;
+const WM_VSCROLL = win32.WM_VSCROLL;
+const WM_MOUSEWHEEL = win32.WM_MOUSEWHEEL;
+const WM_SETTINGCHANGE = win32.WM_SETTINGCHANGE;
+const WM_KEYDOWN = win32.WM_KEYDOWN;
+const WM_PAINT = win32.WM_PAINT;
+const WM_DESTROY = win32.WM_DESTROY;
+const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
+const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
+const HANDLE_WM_HSCROLL = windowsx.HANDLE_WM_HSCROLL;
+const HANDLE_WM_VSCROLL = windowsx.HANDLE_WM_VSCROLL;
+const HANDLE_WM_MOUSEWHEEL = windowsx.HANDLE_WM_MOUSEWHEEL;
+const HANDLE_WM_SETTINGCHANGE = windowsx.HANDLE_WM_SETTINGCHANGE;
+const HANDLE_WM_KEYDOWN = windowsx.HANDLE_WM_KEYDOWN;
+const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
+const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 fn WndProc(
     hwnd: HWND,
@@ -460,16 +459,20 @@ fn WndProc(
     wParam: WPARAM,
     lParam: LPARAM,
 ) callconv(WINAPI) LRESULT {
+    const state = struct {
+        var handler = Handler{};
+    };
+
     return switch (message) {
-        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
-        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
-        WM_HSCROLL => HANDLE_WM_HSCROLL(hwnd, wParam, lParam, Handler, &handler),
-        WM_VSCROLL => HANDLE_WM_VSCROLL(hwnd, wParam, lParam, Handler, &handler),
-        WM_MOUSEWHEEL => HANDLE_WM_MOUSEWHEEL(hwnd, wParam, lParam, Handler, &handler),
-        WM_SETTINGCHANGE => HANDLE_WM_SETTINGCHANGE(hwnd, wParam, lParam, Handler, &handler),
-        WM_KEYDOWN => HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &handler),
-        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_HSCROLL => HANDLE_WM_HSCROLL(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_VSCROLL => HANDLE_WM_VSCROLL(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_MOUSEWHEEL => HANDLE_WM_MOUSEWHEEL(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_SETTINGCHANGE => HANDLE_WM_SETTINGCHANGE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_KEYDOWN => HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
         else => win32.DefWindowProc(hwnd, message, wParam, lParam),
     };
 }

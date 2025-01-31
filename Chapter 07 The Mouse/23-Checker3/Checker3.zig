@@ -44,7 +44,7 @@ const WM_PAINT = win32.WM_PAINT;
 const WM_DESTROY = win32.WM_DESTROY;
 const SendMessage = win32.SendMessage;
 
-const windowsx = @import("windowsx").windowsx;
+const windowsx = @import("windowsx");
 const GetStockBrush = windowsx.GetStockBrush;
 const HANDLE_WM_CREATE = windowsx.HANDLE_WM_CREATE;
 const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
@@ -63,13 +63,13 @@ pub export fn wWinMain(
     const app_name = L("Checker3");
     var wndclassex = win32.WNDCLASSEX{
         .cbSize = @sizeOf(win32.WNDCLASSEX),
-        .style = win32.WNDCLASS_STYLES.initFlags(.{ .HREDRAW = 1, .VREDRAW = 1 }),
+        .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.HICON, win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
-        .hCursor = @ptrCast(win32.HCURSOR, win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS.initFlags(.{ .SHARED = 1, .DEFAULTSIZE = 1 }))),
+        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -78,7 +78,7 @@ pub export fn wWinMain(
 
     const atom: u16 = win32.RegisterClassEx(&wndclassex);
     if (0 == atom) {
-        std.debug.print("failed RegisterClassEx()", .{});
+        std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
     }
 
@@ -89,21 +89,15 @@ pub export fn wWinMain(
 
     _ = win32.RegisterClassEx(&wndclassex);
 
-    // If a memory align panic occurs then the CreateWindowExW() Zig declaration
-    // needs to have align(1) added to the lpClassName parameter.
-    //   lpClassName: ?[*:0]align(1) const u16,
-    //                      ^^^^^^^^
+    // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
-    const lpClassName = @intToPtr([*:0]align(1) const u16, atom);
 
     const hwnd = win32.CreateWindowEx(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        win32.WINDOW_EX_STYLE.initFlags(.{}),
-        lpClassName,
+        win32.WINDOW_EX_STYLE{},
+        @ptrFromInt(atom),
         L("Checker3 Mouse Hit-Test Demo"),
-        win32.WINDOW_STYLE.initFlags(.{
-            .TILEDWINDOW = 1, // .OVERLAPPEDWINDOW equivalent
-        }),
+        win32.WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, // initial x position
         CW_USEDEFAULT, // initial y position
         CW_USEDEFAULT, // initial x size
@@ -115,13 +109,13 @@ pub export fn wWinMain(
     );
 
     if (null == hwnd) {
-        std.debug.print("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
-    _ = win32.ShowWindow(hwnd, @intToEnum(win32.SHOW_WINDOW_CMD, nCmdShow));
+    _ = win32.ShowWindow(hwnd, @bitCast(nCmdShow));
     if (0 == win32.UpdateWindow(hwnd)) {
-        std.debug.print("failed UpdateWindow()", .{});
+        std.log.err("failed UpdateWindow()", .{});
         return 0; // premature exit
     }
 
@@ -132,7 +126,7 @@ pub export fn wWinMain(
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.debug.print("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
@@ -142,22 +136,24 @@ pub export fn wWinMain(
     }
 
     // Normal exit
-    return @bitCast(c_int, @truncate(c_uint, msg.wParam)); // WM_QUIT
+    return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
 const Handler = struct {
+    const Self = @This();
+
     const DIVISIONS = 5;
     hwndChild: [DIVISIONS][DIVISIONS]?HWND = undefined,
 
-    pub fn OnCreate(self: *Handler, hwnd: HWND, cs: *win32.CREATESTRUCT) LRESULT {
-        _ = cs;
+    dummy: i1 = undefined, // workaround for Zig 0.10.0 issue #13451
 
+    pub fn OnCreate(self: *Self, hwnd: HWND, _: *win32.CREATESTRUCT) LRESULT {
         var i: usize = 0;
         while (i < DIVISIONS) : (i += 1) {
             var j: usize = 0;
             while (j < DIVISIONS) : (j += 1) {
                 self.hwndChild[i][j] = win32.CreateWindowEx(
-                    win32.WINDOW_EX_STYLE.initFlags(.{}),
+                    win32.WINDOW_EX_STYLE{},
                     ChildHandler.szChildClass,
                     null,
                     win32.WINDOW_STYLE.initFlags(.{ .CHILD = 1, .VISIBLE = 1 }),
@@ -166,8 +162,8 @@ const Handler = struct {
                     0,
                     0,
                     hwnd,
-                    @intToPtr(?win32.HMENU, (j << 8 | i)),
-                    @intToPtr(?HINSTANCE, @bitCast(usize, win32.GetWindowLongPtr(hwnd, win32.GWLP_HINSTANCE))),
+                    @ptrFromInt((j << 8 | i)),
+                    @ptrFromInt(@as(usize, @bitCast(win32.GetWindowLongPtr(hwnd, win32.GWLP_HINSTANCE)))),
                     null,
                 );
             }
@@ -175,15 +171,15 @@ const Handler = struct {
         return 0;
     }
 
-    pub fn OnSize(self: *Handler, _: HWND, _: u32, cxClient: i16, cyClient: i16) void {
-        var cxBlock = @divTrunc(cxClient, DIVISIONS);
-        var cyBlock = @divTrunc(cyClient, DIVISIONS);
+    pub fn OnSize(self: *Self, _: HWND, _: u32, cxClient: i16, cyClient: i16) void {
+        const cxBlock = @divTrunc(cxClient, DIVISIONS);
+        const cyBlock = @divTrunc(cyClient, DIVISIONS);
         var i: usize = 0;
         while (i < DIVISIONS) : (i += 1) {
             var j: usize = 0;
             while (j < DIVISIONS) : (j += 1) {
-                var x = @intCast(i32, i);
-                var y = @intCast(i32, j);
+                const x: i32 = @intCast(i);
+                const y: i32 = @intCast(j);
                 _ = win32.MoveWindow(
                     self.hwndChild[i][j],
                     x * cxBlock,
@@ -196,26 +192,30 @@ const Handler = struct {
         }
     }
 
-    pub fn OnLButtonDown(_: *Handler, _: HWND, _: bool, _: i16, _: i16, _: u32) void {
+    pub fn OnLButtonDown(_: *Self, _: HWND, _: bool, _: i16, _: i16, _: u32) void {
         _ = win32.MessageBeep(0);
     }
 
-    pub fn OnDestroy(_: *Handler, _: HWND) void {
+    pub fn OnDestroy(_: *Self, _: HWND) void {
         win32.PostQuitMessage(0);
     }
 };
 
 const ChildHandler = struct {
+    const Self = @This();
+
+    dummy: i1 = undefined, // workaround for Zig 0.10.0 issue #13451
+
     pub const szChildClass = L("Checker3_Child");
 
-    pub fn OnCreate(self: *ChildHandler, hwnd: HWND, cs: *win32.CREATESTRUCT) LRESULT {
+    pub fn OnCreate(self: *Self, hwnd: HWND, cs: *win32.CREATESTRUCT) LRESULT {
         _ = self;
         _ = cs;
         _ = win32.SetWindowLongPtr(hwnd, win32.GWLP_USERDATA, 0); // on/off flag
         return 0;
     }
 
-    pub fn OnLButtonDown(self: *ChildHandler, hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32) void {
+    pub fn OnLButtonDown(self: *Self, hwnd: HWND, fDoubleClick: bool, x: i16, y: i16, keyFlags: u32) void {
         _ = self;
         _ = fDoubleClick;
         _ = x;
@@ -227,12 +227,10 @@ const ChildHandler = struct {
         _ = win32.InvalidateRect(hwnd, null, FALSE);
     }
 
-    pub fn OnPaint(_: *ChildHandler, hwnd: HWND) void {
+    pub fn OnPaint(_: *Self, hwnd: HWND) void {
         var ps: win32.PAINTSTRUCT = undefined;
         const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
-        defer {
-            _ = win32.EndPaint(hwnd, &ps);
-        }
+        defer _ = win32.EndPaint(hwnd, &ps);
 
         var rect: RECT = undefined;
         _ = win32.GetClientRect(hwnd, &rect);
@@ -247,24 +245,24 @@ const ChildHandler = struct {
     }
 };
 
-var handler = Handler{};
-
 fn WndProc(
     hwnd: HWND,
     message: u32,
     wParam: WPARAM,
     lParam: LPARAM,
 ) callconv(WINAPI) LRESULT {
+    const state = struct {
+        var handler = Handler{};
+    };
+
     return switch (message) {
-        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &handler),
-        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
-        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwnd, wParam, lParam, Handler, &handler),
-        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
+        WM_CREATE => HANDLE_WM_CREATE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwnd, wParam, lParam, Handler, &state.handler),
+        WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
         else => win32.DefWindowProc(hwnd, message, wParam, lParam),
     };
 }
-
-var childHandler = ChildHandler{};
 
 fn ChildWndProc(
     hwndChild: HWND,
@@ -272,10 +270,14 @@ fn ChildWndProc(
     wParam: WPARAM,
     lParam: LPARAM,
 ) callconv(WINAPI) LRESULT {
+    const state = struct {
+        var handler = ChildHandler{};
+    };
+
     return switch (message) {
-        WM_CREATE => HANDLE_WM_CREATE(hwndChild, wParam, lParam, ChildHandler, &childHandler),
-        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwndChild, wParam, lParam, ChildHandler, childHandler),
-        WM_PAINT => HANDLE_WM_PAINT(hwndChild, wParam, lParam, ChildHandler, childHandler),
+        WM_CREATE => HANDLE_WM_CREATE(hwndChild, wParam, lParam, ChildHandler, &state.handler),
+        WM_LBUTTONDOWN => HANDLE_WM_LBUTTONDOWN(hwndChild, wParam, lParam, ChildHandler, &state.handler),
+        WM_PAINT => HANDLE_WM_PAINT(hwndChild, wParam, lParam, ChildHandler, &state.handler),
         else => win32.DefWindowProc(hwndChild, message, wParam, lParam),
     };
 }

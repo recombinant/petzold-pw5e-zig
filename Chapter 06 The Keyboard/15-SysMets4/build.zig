@@ -4,10 +4,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const zigwin32 = b.dependency("zigwin32", .{}).module("zigwin32");
+    const win32 = b.dependency("win32", .{}).module("win32");
     const windowsx = b.dependency("windowsx", .{}).module("windowsx");
     const sysmets = b.createModule(.{ .root_source_file = b.path("../../Chapter 04 An Exercise in Text Output/04-SysMets1/SysMets.zig") });
-    sysmets.addImport("zigwin32", zigwin32);
+    sysmets.addImport("win32", win32);
     sysmets.addImport("windowsx", windowsx);
 
     const exe_mod = b.createModule(.{
@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
         .name = "SysMets4",
         .root_module = exe_mod,
     });
-    exe.root_module.addImport("zigwin32", zigwin32);
+    exe.root_module.addImport("win32", win32);
     exe.root_module.addImport("windowsx", windowsx);
     exe.root_module.addImport("sysmets", sysmets);
 

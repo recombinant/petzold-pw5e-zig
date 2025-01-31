@@ -19,11 +19,11 @@ pub fn build(b: *std.build.Builder) void {
 
     const pkg1 = std.build.Pkg{
         .name = "win32",
-        .path = .{ .path = "../../zigwin32/win32.zig" },
+        .source = .{ .path = "../../zigwin32/win32.zig" },
     };
     const pkg2 = std.build.Pkg{
         .name = "windowsx",
-        .path = .{ .path = "../../windowsx/windowsx.zig" },
+        .source = .{ .path = "../../windowsx/windowsx.zig" },
         .dependencies = &[_]std.build.Pkg{pkg1},
     };
 

@@ -20,13 +20,13 @@ const buffer_sizes = @import("sysmets").buffer_sizes;
 const num_lines = @import("sysmets").num_lines;
 
 const win32 = struct {
-    usingnamespace @import("zigwin32").zig;
-    usingnamespace @import("zigwin32").system.library_loader;
-    usingnamespace @import("zigwin32").foundation;
-    usingnamespace @import("zigwin32").system.system_services;
-    usingnamespace @import("zigwin32").ui.windows_and_messaging;
-    usingnamespace @import("zigwin32").graphics.gdi;
-    usingnamespace @import("zigwin32").ui.controls;
+    usingnamespace @import("win32").zig;
+    usingnamespace @import("win32").system.library_loader;
+    usingnamespace @import("win32").foundation;
+    usingnamespace @import("win32").system.system_services;
+    usingnamespace @import("win32").ui.windows_and_messaging;
+    usingnamespace @import("win32").graphics.gdi;
+    usingnamespace @import("win32").ui.controls;
 };
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;

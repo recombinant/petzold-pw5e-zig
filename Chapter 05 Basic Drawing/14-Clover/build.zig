@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const zigwin32 = b.dependency("zigwin32", .{}).module("zigwin32");
+    const win32 = b.dependency("win32", .{}).module("win32");
     const windowsx = b.dependency("windowsx", .{}).module("windowsx");
 
     const exe_mod = b.createModule(.{
@@ -16,7 +16,7 @@ pub fn build(b: *std.Build) void {
         .name = "Clover",
         .root_module = exe_mod,
     });
-    exe.root_module.addImport("zigwin32", zigwin32);
+    exe.root_module.addImport("win32", win32);
     exe.root_module.addImport("windowsx", windowsx);
 
     b.installArtifact(exe);
