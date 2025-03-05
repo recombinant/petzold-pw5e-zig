@@ -1,12 +1,14 @@
 .{
-    .name = "01-HelloMsg",
-    .version = "0.0.0",
+    .name = .petzold_02_scrn_size,
+    .version = "0.0.1",
+    .fingerprint = 0x94162c8b934fc505,
+    .minimum_zig_version = "0.14.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     .dependencies = .{
-        .win32 = .{
+        .zigwin32 = .{
             .url = "git+https://github.com/marlersoft/zigwin32#e8739b32a33ce48a3286aba31918b26a9dfc6ef0",
-            .hash = "1220219ca4acfa5804ca39945f92554e93507b077c03605b7a4c1c0401f0c7121339",
+            .hash = "zigwin32-25.0.28-preview-AAAAAEEl_AMhnKSs-lgEyjmUX5JVTpNQewd8A2Bbekwc",
         },
     },
 

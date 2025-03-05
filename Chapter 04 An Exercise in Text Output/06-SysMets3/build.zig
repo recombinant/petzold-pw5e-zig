@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const win32 = b.dependency("win32", .{}).module("win32");
+    const win32 = b.dependency("zigwin32", .{}).module("win32");
     const windowsx = b.dependency("windowsx", .{}).module("windowsx");
     const sysmets = b.createModule(.{ .root_source_file = b.path("../04-SysMets1/SysMets.zig") });
     sysmets.addImport("win32", win32);

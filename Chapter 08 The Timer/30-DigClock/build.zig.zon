@@ -1,19 +1,22 @@
 .{
-    .name = "30-DigClock",
-    .version = "0.0.0",
+    .name = .petzold_30_dig_clock,
+    .version = "0.0.1",
+    .fingerprint = 0xcdbf9489781cf48,
+    .minimum_zig_version = "0.14.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
     .dependencies = .{
-        .win32 = .{
+        .zigwin32 = .{
             .url = "git+https://github.com/marlersoft/zigwin32#e8739b32a33ce48a3286aba31918b26a9dfc6ef0",
-            .hash = "1220219ca4acfa5804ca39945f92554e93507b077c03605b7a4c1c0401f0c7121339",
+            .hash = "zigwin32-25.0.28-preview-AAAAAEEl_AMhnKSs-lgEyjmUX5JVTpNQewd8A2Bbekwc",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#1c94a9b04c1b0d9f9249f54168071703d32e66ce",
-            .hash = "122023324c9d8c96dadb735dce16b37c743e5cc6349ac005666bba9db16b79bd0959",
+            .url = "git+https://github.com/recombinant/windowsx#c873055cabd3aad1a5a19765638a4230c8775fbb",
+            .hash = "windowsx-0.0.1-LpPoVPZzAAD_xBMeiPX8CpHUAu6xAu4VA3xr4OVmtBcO",
         },
     },
+
     .paths = .{
         "build.zig",
         "build.zig.zon",

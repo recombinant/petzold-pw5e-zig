@@ -16,7 +16,7 @@ pub fn build(b: *std.Build) void {
 
     exe.root_module.addImport(
         "win32",
-        b.dependency("win32", .{}).module("win32"),
+        b.dependency("zigwin32", .{}).module("win32"),
     );
     exe.root_module.addImport(
         "windowsx",

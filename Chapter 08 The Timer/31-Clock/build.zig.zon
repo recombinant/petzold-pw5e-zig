@@ -1,6 +1,8 @@
 .{
-    .name = "31-Clock",
-    .version = "0.0.0",
+    .name = .petold_30_clock,
+    .version = "0.0.1",
+    .fingerprint = 0xf0f3f157346b6847,
+    .minimum_zig_version = "0.14.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
