@@ -1,6 +1,6 @@
 .{
     .name = .petzold_06_sys_mets3,
-    .version = "0.0.1",
+    .version = "0.0.2",
     .fingerprint = 0x4942315849a53ad1,
     .minimum_zig_version = "0.14.0",
 
@@ -8,14 +8,15 @@
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
     .dependencies = .{
         .zigwin32 = .{
-            .url = "git+https://github.com/marlersoft/zigwin32#e8739b32a33ce48a3286aba31918b26a9dfc6ef0",
-            .hash = "zigwin32-25.0.28-preview-AAAAAEEl_AMhnKSs-lgEyjmUX5JVTpNQewd8A2Bbekwc",
+            .url = "git+https://github.com/marlersoft/zigwin32#7b434a47c2b85f395d8e5a6dca47af6a74422521",
+            .hash = "zigwin32-25.0.28-preview-AAAAALqY-wMp_N2rd4U4tD9LAxh0TbUPLKhzx6lngGQK",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#c873055cabd3aad1a5a19765638a4230c8775fbb",
-            .hash = "windowsx-0.0.1-LpPoVPZzAAD_xBMeiPX8CpHUAu6xAu4VA3xr4OVmtBcO",
+            .url = "git+https://github.com/recombinant/windowsx#73590dfc827c477d5ca6d44ed83df0bde7b5ce14",
+            .hash = "windowsx-0.0.2-LpPoVPZzAABuMu-AxkEqVJRAkZoGcSnbH3BL7hZzSSgo",
         },
     },
+
     .paths = .{
         "build.zig",
         "build.zig.zon",
