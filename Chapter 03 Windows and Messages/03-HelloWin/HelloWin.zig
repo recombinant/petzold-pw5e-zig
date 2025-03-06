@@ -122,8 +122,6 @@ pub export fn wWinMain(
         ret = win32.GetMessage(&msg, null, 0, 0);
     }
 
-    std.log.info("normal exit", .{});
-
     return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
