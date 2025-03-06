@@ -1,19 +1,22 @@
 .{
-    .name = "09-LineDemo",
-    .version = "0.0.0",
+    .name = .petzold_09_line_demo,
+    .version = "0.0.1",
+    .fingerprint = 0xbeb5c714d25395bc,
+    .minimum_zig_version = "0.14.0",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
     .dependencies = .{
-        .win32 = .{
-            .url = "git+https://github.com/marlersoft/zigwin32#e8739b32a33ce48a3286aba31918b26a9dfc6ef0",
-            .hash = "1220219ca4acfa5804ca39945f92554e93507b077c03605b7a4c1c0401f0c7121339",
+        .zigwin32 = .{
+            .url = "git+https://github.com/marlersoft/zigwin32#7b434a47c2b85f395d8e5a6dca47af6a74422521",
+            .hash = "zigwin32-25.0.28-preview-AAAAALqY-wMp_N2rd4U4tD9LAxh0TbUPLKhzx6lngGQK",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#1c94a9b04c1b0d9f9249f54168071703d32e66ce",
-            .hash = "122023324c9d8c96dadb735dce16b37c743e5cc6349ac005666bba9db16b79bd0959",
+            .url = "git+https://github.com/recombinant/windowsx#73590dfc827c477d5ca6d44ed83df0bde7b5ce14",
+            .hash = "windowsx-0.0.2-LpPoVPZzAABuMu-AxkEqVJRAkZoGcSnbH3BL7hZzSSgo",
         },
     },
+
     .paths = .{
         "build.zig",
         "build.zig.zon",
