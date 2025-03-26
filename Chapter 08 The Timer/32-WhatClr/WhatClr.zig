@@ -1,5 +1,5 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
-// https://www.charlespetzold.com/pw5/buffer2.html
+// https://www.charlespetzold.com/pw5/index.html
 //
 // Chapter 8 - WhatClr
 //
