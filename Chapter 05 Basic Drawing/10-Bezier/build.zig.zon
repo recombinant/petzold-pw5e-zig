@@ -1,6 +1,6 @@
 .{
     .name = .petzold_09_bezier,
-    .version = "0.0.1",
+    .version = "0.0.3",
     .fingerprint = 0x6637d7c090f596e1,
     .minimum_zig_version = "0.14.0",
 
@@ -8,12 +8,12 @@
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
     .dependencies = .{
         .zigwin32 = .{
-            .url = "git+https://github.com/marlersoft/zigwin32#7b434a47c2b85f395d8e5a6dca47af6a74422521",
-            .hash = "zigwin32-25.0.28-preview-AAAAALqY-wMp_N2rd4U4tD9LAxh0TbUPLKhzx6lngGQK",
+            .url = "git+https://github.com/marlersoft/zigwin32#be58d3816810c1e4c20781cc7223a60906467d3c",
+            .hash = "zigwin32-25.0.28-preview-AAAAAHsJ-wPA4nREAzT_OOkF6gLrornNuHqREfHDADoS",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#73590dfc827c477d5ca6d44ed83df0bde7b5ce14",
-            .hash = "windowsx-0.0.2-LpPoVPZzAABuMu-AxkEqVJRAkZoGcSnbH3BL7hZzSSgo",
+            .url = "git+https://github.com/recombinant/windowsx#0a07e9f13d8e8139a4ff59df1c6a679c872bba2e",
+            .hash = "windowsx-0.0.3-LpPoVPhuAACn0lWUJCsJW2-cX9eDdNMeMoVsIFgjWOGC",
         },
     },
 
