@@ -35,7 +35,7 @@ pub export fn wWinMain(
     nCmdShow: u32,
 ) callconv(.winapi) c_int {
     const app_name = L("RandRect");
-    const wndclassex = win32.WNDCLASSEXW{
+    const wndclassex: win32.WNDCLASSEXW = .{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
@@ -157,7 +157,7 @@ const WM_DESTROY = win32.WM_DESTROY;
 const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
 const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
-var handler = Handler{};
+var handler: Handler = .{};
 
 fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     return switch (message) {

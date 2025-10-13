@@ -28,6 +28,12 @@ cd "C:\Projects\petzold-pw5e-zig\Chapter 05 Basic Drawing\14-Clover"
 zig build run
 cd "C:\Projects\petzold-pw5e-zig\Chapter 06 The Keyboard\15-SysMets4"
 zig build run
+cd "C:\Projects\petzold-pw5e-zig\Chapter 06 The Keyboard\16-KeyView1"
+zig build run
+cd "C:\Projects\petzold-pw5e-zig\Chapter 06 The Keyboard\17-StokFont"
+zig build run
+cd "C:\Projects\petzold-pw5e-zig\Chapter 06 The Keyboard\18-KeyView2"
+zig build run
 
 @REM cd ""
 @REM zig build run

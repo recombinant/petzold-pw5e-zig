@@ -46,7 +46,7 @@ pub export fn wWinMain(
     _ = pCmdLine;
 
     const app_name = L("SysMets4");
-    const wndclassex = win32.WNDCLASSEXW{
+    const wndclassex: win32.WNDCLASSEXW = .{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
@@ -156,7 +156,7 @@ const Handler = struct {
 
         // Set vertical scroll bar range and page size
         {
-            var si = SCROLLINFO{
+            var si: SCROLLINFO = .{
                 .cbSize = @sizeOf(SCROLLINFO),
                 .fMask = SCROLLINFO_MASK{ .RANGE = 1, .PAGE = 1 },
                 .nMin = 0,
@@ -170,7 +170,7 @@ const Handler = struct {
 
         // Set horizontal scroll bar range and page size
         {
-            var si = SCROLLINFO{
+            var si: SCROLLINFO = .{
                 .cbSize = @sizeOf(SCROLLINFO),
                 .fMask = SCROLLINFO_MASK{ .RANGE = 1, .PAGE = 1 },
                 .nMin = 0,
@@ -185,7 +185,7 @@ const Handler = struct {
 
     pub fn OnVScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u16, _: i16) void {
         // Get all the vertical scroll bar information
-        var si = SCROLLINFO{
+        var si: SCROLLINFO = .{
             .cbSize = @sizeOf(SCROLLINFO),
             .fMask = win32.SIF_ALL,
             .nMin = undefined,
@@ -228,7 +228,7 @@ const Handler = struct {
 
     pub fn OnHScroll(self: *Handler, hwnd: HWND, _: ?HWND, code: u16, _: i16) void {
         // Get all the horizontal scroll bar information
-        var si = SCROLLINFO{
+        var si: SCROLLINFO = .{
             .cbSize = @sizeOf(SCROLLINFO),
             .fMask = win32.SIF_ALL,
             .nMin = undefined,
@@ -288,7 +288,7 @@ const Handler = struct {
         const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
         defer _ = win32.EndPaint(hwnd, &ps);
 
-        var si = SCROLLINFO{
+        var si: SCROLLINFO = .{
             .cbSize = @sizeOf(SCROLLINFO),
             .fMask = SCROLLINFO_MASK{ .POS = 1 },
             .nMin = undefined,
@@ -377,7 +377,7 @@ fn WndProc(
     lParam: LPARAM,
 ) callconv(.winapi) LRESULT {
     const state = struct {
-        var handler = Handler{};
+        var handler: Handler = .{};
     };
 
     return switch (message) {

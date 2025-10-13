@@ -45,7 +45,7 @@ pub export fn wWinMain(
     _ = pCmdLine;
 
     const app_name = L("HelloWin");
-    const wndclassex = WNDCLASSEXW{
+    const wndclassex: WNDCLASSEXW = .{
         .cbSize = @sizeOf(WNDCLASSEXW),
         .style = WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,

@@ -37,7 +37,7 @@ pub export fn wWinMain(
     nCmdShow: u32,
 ) callconv(.winapi) c_int {
     const app_name = L("AltWind");
-    const wndclassex = win32.WNDCLASSEXW{
+    const wndclassex: win32.WNDCLASSEXW = .{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
@@ -169,7 +169,7 @@ const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     const state = struct {
-        var handler = Handler{};
+        var handler: Handler = .{};
     };
 
     return switch (message) {

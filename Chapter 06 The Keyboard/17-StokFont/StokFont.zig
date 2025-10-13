@@ -36,7 +36,7 @@ pub export fn wWinMain(
     _ = pCmdLine;
 
     const app_name = L("StokFont");
-    const wndclassex = win32.WNDCLASSEXW{
+    const wndclassex: win32.WNDCLASSEXW = .{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
@@ -147,7 +147,7 @@ const Handler = struct {
     iFont: usize = 0,
 
     pub fn OnCreate(_: *Handler, hwnd: HWND, _: *win32.CREATESTRUCTW) LRESULT {
-        var si = win32.SCROLLINFO{
+        var si: win32.SCROLLINFO = .{
             .cbSize = @sizeOf(win32.SCROLLINFO),
             .fMask = win32.SIF_RANGE,
             .nMin = 0,
@@ -301,7 +301,7 @@ const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     const state = struct {
-        var handler = Handler{};
+        var handler: Handler = .{};
     };
 
     return switch (message) {

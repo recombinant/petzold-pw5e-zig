@@ -39,7 +39,7 @@ pub export fn wWinMain(
     _ = pCmdLine;
 
     const app_name = L("SysMets1");
-    const wndclassex = win32.WNDCLASSEXW{
+    const wndclassex: win32.WNDCLASSEXW = .{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
