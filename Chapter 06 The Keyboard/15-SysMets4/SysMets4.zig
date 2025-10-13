@@ -9,25 +9,15 @@
 //  SYSMETS4.C -- System Metrics Display Program No. 4
 //                (c) Charles Petzold, 1998
 // ----------------------------------------------------
-pub const UNICODE = true;
-
 const std = @import("std");
-
-const WINAPI = std.os.windows.WINAPI;
 
 const sysmetrics = @import("sysmets").sysmetrics;
 const buffer_sizes = @import("sysmets").buffer_sizes;
 const num_lines = @import("sysmets").num_lines;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
-    usingnamespace @import("win32").ui.controls;
-    usingnamespace @import("win32").ui.input.keyboard_and_mouse;
-};
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
+
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
 const TRUE = win32.TRUE;
@@ -39,7 +29,7 @@ const HDC = win32.HDC;
 const LPARAM = win32.LPARAM;
 const WPARAM = win32.WPARAM;
 const LRESULT = win32.LRESULT;
-const CREATESTRUCT = win32.CREATESTRUCT;
+const CREATESTRUCT = win32.CREATESTRUCTW;
 const SCROLLINFO = win32.SCROLLINFO;
 const SCROLLINFO_MASK = win32.SCROLLINFO_MASK;
 const VIRTUAL_KEY = win32.VIRTUAL_KEY;
@@ -52,26 +42,26 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = pCmdLine;
 
     const app_name = L("SysMets4");
-    const wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    const wndclassex = win32.WNDCLASSEXW{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -85,7 +75,7 @@ pub export fn wWinMain(
     // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
@@ -97,12 +87,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -113,19 +103,19 @@ pub export fn wWinMain(
     }
 
     var msg: win32.MSG = undefined;
-    var ret: BOOL = win32.GetMessage(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         }
-        ret = win32.GetMessage(&msg, null, 0, 0);
+        ret = win32.GetMessageW(&msg, null, 0, 0);
     }
 
     // Normal exit
@@ -145,8 +135,8 @@ const Handler = struct {
             const hdc = win32.GetDC(hwnd);
             defer _ = win32.ReleaseDC(hwnd, hdc);
 
-            var tm: win32.TEXTMETRIC = undefined;
-            _ = win32.GetTextMetrics(hdc, &tm);
+            var tm: win32.TEXTMETRICW = undefined;
+            _ = win32.GetTextMetricsW(hdc, &tm);
             self.cxChar = tm.tmAveCharWidth;
             const factor: i32 = if (tm.tmPitchAndFamily & 1 != 0) 3 else 2;
             self.cxCaps = @divTrunc(factor * self.cxChar, 2);
@@ -279,7 +269,7 @@ const Handler = struct {
     pub fn OnKey(_: *Handler, hwnd: HWND, vk: VIRTUAL_KEY, _: bool, _: i16, _: u16) void {
         const FORWARD_WM_VSCROLL = windowsx.FORWARD_WM_VSCROLL;
         const FORWARD_WM_HSCROLL = windowsx.FORWARD_WM_HSCROLL;
-        const SendMessage = win32.SendMessage;
+        const SendMessage = win32.SendMessageW;
         switch (vk) {
             win32.VK_HOME => _ = FORWARD_WM_VSCROLL(hwnd, null, win32.SB_TOP, 0, SendMessage),
             win32.VK_END => _ = FORWARD_WM_VSCROLL(hwnd, null, win32.SB_BOTTOM, 0, SendMessage),
@@ -351,12 +341,12 @@ const Handler = struct {
 
             _ = win32.SetTextAlign(hdc, flagsL);
 
-            _ = win32.TextOut(hdc, x, y, @ptrCast(&label), label_len);
-            _ = win32.TextOut(hdc, x + 22 * self.cxCaps, y, @ptrCast(&description), description_len);
+            _ = win32.TextOutW(hdc, x, y, @ptrCast(&label), label_len);
+            _ = win32.TextOutW(hdc, x + 22 * self.cxCaps, y, @ptrCast(&description), description_len);
 
             _ = win32.SetTextAlign(hdc, flagsR);
 
-            _ = win32.TextOut(hdc, x + 22 * self.cxCaps + 40 * self.cxChar, y, @ptrCast(&index), index_len);
+            _ = win32.TextOutW(hdc, x + 22 * self.cxCaps + 40 * self.cxChar, y, @ptrCast(&index), index_len);
         }
     }
 
@@ -385,7 +375,7 @@ fn WndProc(
     message: u32,
     wParam: WPARAM,
     lParam: LPARAM,
-) callconv(WINAPI) LRESULT {
+) callconv(.winapi) LRESULT {
     const state = struct {
         var handler = Handler{};
     };
@@ -398,6 +388,6 @@ fn WndProc(
         WM_KEYDOWN => HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &state.handler),
         WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
         WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
-        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+        else => win32.DefWindowProcW(hwnd, message, wParam, lParam),
     };
 }
