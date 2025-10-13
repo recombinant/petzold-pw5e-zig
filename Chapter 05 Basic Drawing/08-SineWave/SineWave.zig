@@ -11,20 +11,11 @@
 // -----------------------------------------
 const NUM = 1000;
 // -----------------------------------------
-pub const UNICODE = true;
-
 const std = @import("std");
 
-const WINAPI = std.os.windows.WINAPI;
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").system.system_services;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
-};
 const BOOL = win32.BOOL;
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
@@ -44,26 +35,26 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = pCmdLine;
 
     const app_name = L("SineWave");
-    const wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    const wndclassex = win32.WNDCLASSEXW{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -72,7 +63,7 @@ pub export fn wWinMain(
     // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
@@ -84,12 +75,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -100,19 +91,19 @@ pub export fn wWinMain(
     }
 
     var msg: MSG = undefined;
-    var ret: BOOL = win32.GetMessage(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         }
-        ret = win32.GetMessage(&msg, null, 0, 0);
+        ret = win32.GetMessageW(&msg, null, 0, 0);
     }
 
     // Normal exit
@@ -162,7 +153,7 @@ const HANDLE_WM_SIZE = windowsx.HANDLE_WM_SIZE;
 const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
 const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
-fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
+fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     const state = struct {
         var handler = Handler{};
     };
@@ -171,6 +162,6 @@ fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WI
         WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &state.handler),
         WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
         WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
-        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+        else => win32.DefWindowProcW(hwnd, message, wParam, lParam),
     };
 }

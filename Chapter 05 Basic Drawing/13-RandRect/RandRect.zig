@@ -9,20 +9,11 @@
 //  RANDRECT.C -- Displays Random Rectangles
 //                (c) Charles Petzold, 1998
 // ------------------------------------------
-pub const UNICODE = true;
-
 const std = @import("std");
 
-const WINAPI = std.os.windows.WINAPI;
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").system.system_services;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
-};
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
 const L = win32.L;
@@ -42,24 +33,24 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     _: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     const app_name = L("RandRect");
-    const wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    const wndclassex = win32.WNDCLASSEXW{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -68,7 +59,7 @@ pub export fn wWinMain(
     // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
@@ -80,12 +71,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -105,11 +96,11 @@ pub export fn wWinMain(
     var msg: MSG = undefined;
 
     while (true) {
-        if (win32.PeekMessage(&msg, null, 0, 0, win32.PM_REMOVE) != FALSE) {
+        if (win32.PeekMessageW(&msg, null, 0, 0, win32.PM_REMOVE) != FALSE) {
             if (msg.message == WM_QUIT)
                 break;
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         } else {
             DrawRectangle(hwnd);
         }
@@ -168,10 +159,10 @@ const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
 var handler = Handler{};
 
-fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
+fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     return switch (message) {
         WM_SIZE => HANDLE_WM_SIZE(hwnd, wParam, lParam, Handler, &handler),
         WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &handler),
-        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+        else => win32.DefWindowProcW(hwnd, message, wParam, lParam),
     };
 }
