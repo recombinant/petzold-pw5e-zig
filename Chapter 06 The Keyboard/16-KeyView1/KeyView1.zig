@@ -1,12 +1,12 @@
 // Transliterated from Charles Petzold's Programming Windows 5e
 // https://www.charlespetzold.com/pw5/index.html
 //
-// Chapter 6 - KeyView2
+// Chapter 6 - KeyView1
 //
 // The original source code copyright:
 //
 // --------------------------------------------------------
-//  KEYVIEW2.C -- Displays Keyboard and Character Messages
+//  KEYVIEW1.C -- Displays Keyboard and Character Messages
 //                (c) Charles Petzold, 1998
 // --------------------------------------------------------
 const std = @import("std");
@@ -39,7 +39,7 @@ pub export fn wWinMain(
 ) callconv(.winapi) c_int {
     _ = pCmdLine;
 
-    const app_name = L("KeyView2");
+    const app_name = L("KeyView1");
     const wndclassex = win32.WNDCLASSEXW{
         .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
@@ -68,7 +68,7 @@ pub export fn wWinMain(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
-        L("Keyboard Message Viewer #2"),
+        L("Keyboard Message Viewer #1"),
         win32.WS_OVERLAPPEDWINDOW,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
@@ -122,7 +122,6 @@ var msg_pool: std.heap.MemoryPool(Element) = .init(std.heap.page_allocator);
 var msg_list: std.DoublyLinkedList = .{};
 
 const Handler = struct {
-    dwCharSet: u32 = win32.DEFAULT_CHARSET,
     cxClientMax: i32 = undefined,
     cyClientMax: i32 = undefined,
     cxChar: i32 = undefined,
@@ -191,7 +190,7 @@ const Handler = struct {
         // Store new message
 
         const new_element = msg_pool.create() catch unreachable;
-        new_element.* = .{ .msg = .{
+        new_element.* = Element{ .msg = MSG{
             .hwnd = hwnd,
             .message = message,
             .wParam = wParam,
@@ -243,7 +242,7 @@ const Handler = struct {
             const msg = element.msg;
 
             var buffer: [128]u8 = undefined;
-            var w: std.Io.Writer = .fixed(&buffer);
+            var w: std.Io.Writer = .fixed(&buffer); // fixed buffer stream
 
             const message = messages[msg.message - win32.WM_KEYFIRST];
 

@@ -9,22 +9,11 @@
 //  STOKFONT.C -- Stock Font Objects
 //                (c) Charles Petzold, 1998
 // ---------------------------------------------------------
-
-pub const UNICODE = true;
-
 const std = @import("std");
 
-const WINAPI = std.os.windows.WINAPI;
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
-    usingnamespace @import("win32").ui.controls;
-    usingnamespace @import("win32").ui.input.keyboard_and_mouse;
-};
 const BOOL = win32.BOOL;
 const FALSE = win32.FALSE;
 const TRUE = win32.TRUE;
@@ -43,26 +32,26 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = pCmdLine;
 
     const app_name = L("StokFont");
-    const wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    const wndclassex = win32.WNDCLASSEXW{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = windowsx.GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -75,7 +64,7 @@ pub export fn wWinMain(
     // If a memory align panic occurs with CreateWindowExW() lpClassName then look at:
     // https://github.com/marlersoft/zigwin32gen/issues/9
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
@@ -87,12 +76,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -103,19 +92,19 @@ pub export fn wWinMain(
     }
 
     var msg: win32.MSG = undefined;
-    var ret: BOOL = win32.GetMessage(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         }
-        ret = win32.GetMessage(&msg, null, 0, 0);
+        ret = win32.GetMessageW(&msg, null, 0, 0);
     }
 
     // Normal exit
@@ -157,7 +146,7 @@ const stockfonts = blk: {
 const Handler = struct {
     iFont: usize = 0,
 
-    pub fn OnCreate(_: *Handler, hwnd: HWND, _: *win32.CREATESTRUCT) LRESULT {
+    pub fn OnCreate(_: *Handler, hwnd: HWND, _: *win32.CREATESTRUCTW) LRESULT {
         var si = win32.SCROLLINFO{
             .cbSize = @sizeOf(win32.SCROLLINFO),
             .fMask = win32.SIF_RANGE,
@@ -197,16 +186,16 @@ const Handler = struct {
         _ = flags;
         if (fDown)
             _ = switch (vk) {
-                win32.VK_HOME => win32.SendMessage(hwnd, win32.WM_VSCROLL, win32.SB_TOP, 0),
-                win32.VK_END => win32.SendMessage(hwnd, win32.WM_VSCROLL, win32.SB_BOTTOM, 0),
+                win32.VK_HOME => win32.SendMessageW(hwnd, win32.WM_VSCROLL, win32.SB_TOP, 0),
+                win32.VK_END => win32.SendMessageW(hwnd, win32.WM_VSCROLL, win32.SB_BOTTOM, 0),
                 win32.VK_PRIOR,
                 win32.VK_LEFT,
                 win32.VK_UP,
-                => win32.SendMessage(hwnd, win32.WM_VSCROLL, win32.SB_LINEUP, 0),
+                => win32.SendMessageW(hwnd, win32.WM_VSCROLL, win32.SB_LINEUP, 0),
                 win32.VK_NEXT,
                 win32.VK_RIGHT,
                 win32.VK_DOWN,
-                => win32.SendMessage(hwnd, win32.WM_VSCROLL, win32.SB_PAGEDOWN, 0),
+                => win32.SendMessageW(hwnd, win32.WM_VSCROLL, win32.SB_PAGEDOWN, 0),
                 else => return,
             };
     }
@@ -219,8 +208,8 @@ const Handler = struct {
 
         _ = win32.SelectObject(hdc, windowsx.GetStockFont(stockfonts[self.iFont].id));
 
-        var tm: win32.TEXTMETRIC = undefined;
-        _ = win32.GetTextMetrics(hdc, &tm);
+        var tm: win32.TEXTMETRICW = undefined;
+        _ = win32.GetTextMetricsW(hdc, &tm);
         const cxGrid = @max(3 * tm.tmAveCharWidth, 2 * tm.tmMaxCharWidth);
         const cyGrid = tm.tmHeight + 3;
 
@@ -228,14 +217,13 @@ const Handler = struct {
         _ = win32.GetTextFaceA(hdc, win32.LF_FACESIZE, &szFaceName);
 
         var buffer1: [win32.LF_FACESIZE + 64]u8 = undefined;
-        var stream1 = std.io.fixedBufferStream(&buffer1);
-        const writer1 = stream1.writer();
+        var writer1: std.Io.Writer = .fixed(&buffer1);
 
         writer1.print(
             " {s}: Face Name = {s}, CharSet = {}",
             .{ stockfonts[self.iFont].name, @as([*:0]u8, @ptrCast(&szFaceName)), tm.tmCharSet },
         ) catch unreachable;
-        const written1 = stream1.getWritten();
+        const written1 = writer1.buffered();
         _ = win32.TextOutA(hdc, 0, 0, @ptrCast(written1), @intCast(written1.len));
 
         _ = win32.SetTextAlign(hdc, @enumFromInt(@intFromEnum(win32.TA_TOP) | @intFromEnum(win32.TA_CENTER)));
@@ -254,14 +242,13 @@ const Handler = struct {
         // vertical and horizontal headings
 
         var buffer2: [16]u8 = undefined;
-        var stream2 = std.io.fixedBufferStream(&buffer2);
-        const writer2 = stream2.writer();
+        var writer2: std.Io.Writer = .fixed(&buffer2);
 
         i = 0;
         while (i < 16) : (i += 1) {
-            stream2.reset();
+            _ = writer2.consumeAll(); // reset writer2
             writer2.print("{X}-", .{i}) catch unreachable;
-            const written2 = stream2.getWritten();
+            const written2 = writer2.buffered();
             _ = win32.TextOutA(
                 hdc,
                 (2 * i + 5) * @divTrunc(cxGrid, 2),
@@ -270,9 +257,9 @@ const Handler = struct {
                 @intCast(written2.len),
             );
 
-            stream2.reset();
+            _ = writer2.consumeAll(); // reset writer2
             writer2.print("-{X}", .{i}) catch unreachable;
-            const written3 = stream2.getWritten();
+            const written3 = writer2.buffered();
             _ = win32.TextOutA(
                 hdc,
                 3 * @divTrunc(cxGrid, 2),
@@ -312,7 +299,7 @@ const HANDLE_WM_KEYDOWN = windowsx.HANDLE_WM_KEYDOWN;
 const HANDLE_WM_PAINT = windowsx.HANDLE_WM_PAINT;
 const HANDLE_WM_DESTROY = windowsx.HANDLE_WM_DESTROY;
 
-fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WINAPI) LRESULT {
+fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(.winapi) LRESULT {
     const state = struct {
         var handler = Handler{};
     };
@@ -324,6 +311,6 @@ fn WndProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) callconv(WI
         win32.WM_KEYDOWN => HANDLE_WM_KEYDOWN(hwnd, wParam, lParam, Handler, &state.handler),
         win32.WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
         win32.WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
-        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+        else => win32.DefWindowProcW(hwnd, message, wParam, lParam),
     };
 }
