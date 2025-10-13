@@ -2,6 +2,7 @@
     .name = .petzold_18_KeyView2,
     .version = "0.0.4",
     .fingerprint = 0x412c077913cbe08,
+    .minimum_zig_version = "0.15.2",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     // zig fetch --save "git+https://github.com/recombinant/windowsx"

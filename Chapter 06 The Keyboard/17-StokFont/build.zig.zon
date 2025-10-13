@@ -2,6 +2,7 @@
     .name = .petzold_17_StokFont,
     .version = "0.0.4",
     .fingerprint = 0xe6a9ccac6c4faac3,
+    .minimum_zig_version = "0.15.2",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     // zig fetch --save "git+https://github.com/recombinant/windowsx"
