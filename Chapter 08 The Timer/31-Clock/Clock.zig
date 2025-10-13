@@ -11,21 +11,11 @@
 // --------------------------------------
 const ID_TIMER = 1;
 
-pub const UNICODE = true;
-
 const std = @import("std");
 
-const WINAPI = std.os.windows.WINAPI;
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").system.system_information;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").ui.input.keyboard_and_mouse;
-    usingnamespace @import("win32").graphics.gdi;
-    usingnamespace @import("win32").globalization;
-};
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
+
 const HINSTANCE = win32.HINSTANCE;
 const HWND = win32.HWND;
 const HDC = win32.HDC;
@@ -43,28 +33,28 @@ pub export fn wWinMain(
     hPrevInstance: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = hPrevInstance;
     _ = pCmdLine;
 
     const app_name = L("Clock");
 
-    var wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    var wndclassex: win32.WNDCLASSEXW = .{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = windowsx.GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -77,7 +67,7 @@ pub export fn wWinMain(
     // https://github.com/marlersoft/zigwin32gen/issues/9
     const class_name = @as([*:0]align(1) const u16, @ptrFromInt(atom));
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         class_name,
@@ -89,12 +79,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -105,19 +95,19 @@ pub export fn wWinMain(
     }
 
     var msg: win32.MSG = undefined;
-    var ret: BOOL = win32.GetMessage(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         }
-        ret = win32.GetMessage(&msg, null, 0, 0);
+        ret = win32.GetMessageW(&msg, null, 0, 0);
     }
 
     // Normal exit
@@ -138,7 +128,7 @@ const AngleFloat = struct {
     fn init(angle_i32: i32) AngleFloat {
         const angle_f32 = std.math.degreesToRadians(@as(f32, @floatFromInt(angle_i32)));
 
-        return AngleFloat{
+        return .{
             .cos = @cos(angle_f32),
             .sin = @sin(angle_f32),
         };
@@ -154,25 +144,25 @@ const PointFloat = struct {
     y: f32,
 
     fn init(pt: POINT) Self {
-        return Self{
+        return .{
             .x = @floatFromInt(pt.x),
             .y = @floatFromInt(pt.y),
         };
     }
     fn rotate(self: Self, angle: AngleFloat) Self {
-        return Self{
+        return .{
             .x = (self.x * angle.cos) + (self.y * angle.sin),
             .y = (self.y * angle.cos) - (self.x * angle.sin),
         };
     }
     fn offset(self: Self, distance: f32) Self {
-        return Self{
+        return .{
             .x = self.x + distance,
             .y = self.y + distance,
         };
     }
     fn point(self: Self) POINT {
-        return POINT{
+        return .{
             .x = @intFromFloat(self.x),
             .y = @intFromFloat(self.y),
         };
@@ -180,12 +170,11 @@ const PointFloat = struct {
 };
 
 /// Rotate slice of POINT in place
-pub fn rotatePoints(pts: *[]POINT, angle_i32: i32) void {
-    const angle_f32 = AngleFloat.init(angle_i32);
+pub fn rotatePoints(pts: []POINT, angle_i32: i32) void {
+    const angle_f32: AngleFloat = .init(angle_i32);
 
-    for (0..pts.*.len) |j| {
-        pts.*[j] = PointFloat.init(pts.*[j]).rotate(angle_f32).point();
-    }
+    for (pts) |*pt|
+        pt.* = PointFloat.init(pt.*).rotate(angle_f32).point();
 }
 
 pub fn drawClock(hdc: HDC) void {
@@ -198,8 +187,8 @@ pub fn drawClock(hdc: HDC) void {
         const radius = diameter / 2;
 
         // Rotate
-        const angle_f32 = AngleFloat.init(angle_i32);
-        const center = PointFloat.init(POINT{ .x = 0, .y = 900 }).rotate(angle_f32);
+        const angle_f32: AngleFloat = .init(angle_i32);
+        const center = PointFloat.init(.{ .x = 0, .y = 900 }).rotate(angle_f32);
 
         const top_left: POINT = center.offset(-radius).point();
         const bottom_right: POINT = center.offset(radius).point();
@@ -210,52 +199,50 @@ pub fn drawClock(hdc: HDC) void {
 
 pub fn drawHands(hdc: HDC, system_time: *win32.SYSTEMTIME, changed: bool) void {
     // Arrays of hand points for each of the hands.
-    var hour_hand = [5]POINT{
-        POINT{ .x = 0, .y = -150 }, POINT{ .x = 100, .y = 0 },
-        POINT{ .x = 0, .y = 600 },  POINT{ .x = -100, .y = 0 },
-        POINT{ .x = 0, .y = -150 },
+    var hour_hand: [5]POINT = .{
+        .{ .x = 0, .y = -150 }, .{ .x = 100, .y = 0 },
+        .{ .x = 0, .y = 600 },  .{ .x = -100, .y = 0 },
+        .{ .x = 0, .y = -150 },
     };
-    var minute_hand = [5]POINT{
-        POINT{ .x = 0, .y = -200 }, POINT{ .x = 50, .y = 0 },
-        POINT{ .x = 0, .y = 800 },  POINT{ .x = -50, .y = 0 },
-        POINT{ .x = 0, .y = -200 },
+    var minute_hand: [5]POINT = .{
+        .{ .x = 0, .y = -200 }, .{ .x = 50, .y = 0 },
+        .{ .x = 0, .y = 800 },  .{ .x = -50, .y = 0 },
+        .{ .x = 0, .y = -200 },
     };
-    var second_hand = [2]POINT{ POINT{ .x = 0, .y = 0 }, POINT{ .x = 0, .y = 800 } };
+    var second_hand: [2]POINT = .{ .{ .x = 0, .y = 0 }, .{ .x = 0, .y = 800 } };
 
     // Array of slices of hand points.
-    const hand_point_slices = [3][]POINT{
+    const hand_point_slices: [3][]POINT = .{
         hour_hand[0..],
         minute_hand[0..],
         second_hand[0..],
     };
 
-    const hand_angles = [3]i32{
+    const hand_angles: [3]i32 = .{
         @mod(system_time.*.wHour * 30, 360) + @divTrunc(system_time.*.wMinute, 2),
         system_time.*.wMinute * 6,
         system_time.*.wSecond * 6,
     };
 
     // Only draw the hour and minute hands if "changed" is true.
-    var i: usize = if (changed) 0 else 2;
+    const i: usize = if (changed) 0 else 2;
 
-    while (i < hand_angles.len) : (i += 1) {
-        var pts = hand_point_slices[i];
+    for (hand_point_slices[i..], hand_angles[i..]) |hand_points, hand_angle| {
+        rotatePoints(hand_points, hand_angle);
 
-        rotatePoints(&pts, hand_angles[i]);
-
-        const apt = pts.ptr;
-        const cpt = @as(i32, @intCast(@as(u32, @truncate(pts.len))));
+        const apt = hand_points.ptr;
+        const cpt = @as(i32, @intCast(@as(u32, @truncate(hand_points.len))));
         _ = win32.Polyline(hdc, apt, cpt);
     }
 }
 
 const Handler = struct {
     // This value results in initial "changed" to true in OnTimer()
-    system_time: win32.SYSTEMTIME = win32.SYSTEMTIME{ .wYear = 0, .wMonth = 0, .wDayOfWeek = 0, .wDay = 0, .wHour = 0xffff, .wMinute = 0xffff, .wSecond = 0, .wMilliseconds = 0 },
+    system_time: win32.SYSTEMTIME = .{ .wYear = 0, .wMonth = 0, .wDayOfWeek = 0, .wDay = 0, .wHour = 0xffff, .wMinute = 0xffff, .wSecond = 0, .wMilliseconds = 0 },
     cx_client: i32 = undefined,
     cy_client: i32 = undefined,
 
-    pub fn OnCreate(self: *Handler, hwnd: HWND, _: *win32.CREATESTRUCT) LRESULT {
+    pub fn OnCreate(self: *Handler, hwnd: HWND, _: *win32.CREATESTRUCTW) LRESULT {
         _ = win32.SetTimer(hwnd, ID_TIMER, 1000, null);
         var system_time: win32.SYSTEMTIME = undefined;
         _ = win32.GetLocalTime(&system_time);
@@ -318,9 +305,9 @@ fn WndProc(
     message: u32,
     wParam: WPARAM,
     lParam: LPARAM,
-) callconv(WINAPI) LRESULT {
+) callconv(.winapi) LRESULT {
     const state = struct {
-        var handler = Handler{};
+        var handler: Handler = .{};
     };
 
     return switch (message) {
@@ -329,6 +316,6 @@ fn WndProc(
         WM_TIMER => HANDLE_WM_TIMER(hwnd, wParam, lParam, Handler, &state.handler),
         WM_PAINT => HANDLE_WM_PAINT(hwnd, wParam, lParam, Handler, &state.handler),
         WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wParam, lParam, Handler, &state.handler),
-        else => win32.DefWindowProc(hwnd, message, wParam, lParam),
+        else => win32.DefWindowProcW(hwnd, message, wParam, lParam),
     };
 }

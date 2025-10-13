@@ -9,22 +9,11 @@
 //  DIGCLOCK.c -- Digital Clock
 //                (c) Charles Petzold, 1998
 // -----------------------------------------
-pub const UNICODE = true;
-
 const std = @import("std");
 
-const WINAPI = std.os.windows.WINAPI;
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").system.system_information;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").ui.input.keyboard_and_mouse;
-    usingnamespace @import("win32").graphics.gdi;
-    usingnamespace @import("win32").globalization;
-};
 const HINSTANCE = win32.HINSTANCE;
 const HWND = win32.HWND;
 const HDC = win32.HDC;
@@ -45,28 +34,28 @@ pub export fn wWinMain(
     hPrevInstance: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = hPrevInstance;
     _ = pCmdLine;
 
     const app_name = L("DigClock");
 
-    var wndclassex = win32.WNDCLASSEX{
-        .cbSize = @sizeOf(win32.WNDCLASSEX),
+    var wndclassex: win32.WNDCLASSEXW = .{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
         .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImage(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImage(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = windowsx.GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
         .hIconSm = null,
     };
 
-    const atom: u16 = win32.RegisterClassEx(&wndclassex);
+    const atom: u16 = win32.RegisterClassExW(&wndclassex);
     if (0 == atom) {
         std.log.err("failed RegisterClassEx()", .{});
         return 0; // premature exit
@@ -79,7 +68,7 @@ pub export fn wWinMain(
     // https://github.com/marlersoft/zigwin32gen/issues/9
     const class_name = @as([*:0]align(1) const u16, @ptrFromInt(atom));
 
-    const hwnd = win32.CreateWindowEx(
+    const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
         win32.WINDOW_EX_STYLE{},
         class_name,
@@ -91,12 +80,12 @@ pub export fn wWinMain(
         win32.CW_USEDEFAULT, // initial y size
         null, // parent window handle
         null, // window menu handle
-        win32.GetModuleHandle(null),
+        win32.GetModuleHandleW(null),
         null,
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -107,19 +96,19 @@ pub export fn wWinMain(
     }
 
     var msg: win32.MSG = undefined;
-    var ret: BOOL = win32.GetMessage(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
-            _ = win32.DispatchMessage(&msg);
+            _ = win32.DispatchMessageW(&msg);
         }
-        ret = win32.GetMessage(&msg, null, 0, 0);
+        ret = win32.GetMessageW(&msg, null, 0, 0);
     }
 
     // Normal exit
@@ -127,32 +116,32 @@ pub export fn wWinMain(
 }
 
 // 10 digits, each 7 segments
-const digit_segment_flags: [10][7]bool = [_][7]bool{
-    [_]bool{ true, true, true, false, true, true, true }, // 0
-    [_]bool{ false, false, true, false, false, true, false }, // 1
-    [_]bool{ true, false, true, true, true, false, true }, // 2
-    [_]bool{ true, false, true, true, false, true, true }, // 3
-    [_]bool{ false, true, true, true, false, true, false }, // 4
-    [_]bool{ true, true, false, true, false, true, true }, // 5
-    [_]bool{ true, true, false, true, true, true, true }, // 6
-    [_]bool{ true, false, true, false, false, true, false }, // 7
-    [_]bool{ true, true, true, true, true, true, true }, // 8
-    [_]bool{ true, true, true, true, false, true, true }, // 9
+const digit_segment_flags: [10][7]bool = .{
+    .{ true, true, true, false, true, true, true }, // 0
+    .{ false, false, true, false, false, true, false }, // 1
+    .{ true, false, true, true, true, false, true }, // 2
+    .{ true, false, true, true, false, true, true }, // 3
+    .{ false, true, true, true, false, true, false }, // 4
+    .{ true, true, false, true, false, true, true }, // 5
+    .{ true, true, false, true, true, true, true }, // 6
+    .{ true, false, true, false, false, true, false }, // 7
+    .{ true, true, true, true, true, true, true }, // 8
+    .{ true, true, true, true, false, true, true }, // 9
 };
 // 7 segments
-const segment_points: [7][6]POINT = [_][6]POINT{
-    [_]POINT{ POINT{ .x = 7, .y = 6 }, POINT{ .x = 11, .y = 2 }, POINT{ .x = 31, .y = 2 }, POINT{ .x = 35, .y = 6 }, POINT{ .x = 31, .y = 10 }, POINT{ .x = 11, .y = 10 } },
-    [_]POINT{ POINT{ .x = 6, .y = 7 }, POINT{ .x = 10, .y = 11 }, POINT{ .x = 10, .y = 31 }, POINT{ .x = 6, .y = 35 }, POINT{ .x = 2, .y = 31 }, POINT{ .x = 2, .y = 11 } },
-    [_]POINT{ POINT{ .x = 36, .y = 7 }, POINT{ .x = 40, .y = 11 }, POINT{ .x = 40, .y = 31 }, POINT{ .x = 36, .y = 35 }, POINT{ .x = 32, .y = 31 }, POINT{ .x = 32, .y = 11 } },
-    [_]POINT{ POINT{ .x = 7, .y = 36 }, POINT{ .x = 11, .y = 32 }, POINT{ .x = 31, .y = 32 }, POINT{ .x = 35, .y = 36 }, POINT{ .x = 31, .y = 40 }, POINT{ .x = 11, .y = 40 } },
-    [_]POINT{ POINT{ .x = 6, .y = 37 }, POINT{ .x = 10, .y = 41 }, POINT{ .x = 10, .y = 61 }, POINT{ .x = 6, .y = 65 }, POINT{ .x = 2, .y = 61 }, POINT{ .x = 2, .y = 41 } },
-    [_]POINT{ POINT{ .x = 36, .y = 37 }, POINT{ .x = 40, .y = 41 }, POINT{ .x = 40, .y = 61 }, POINT{ .x = 36, .y = 65 }, POINT{ .x = 32, .y = 61 }, POINT{ .x = 32, .y = 41 } },
-    [_]POINT{ POINT{ .x = 7, .y = 66 }, POINT{ .x = 11, .y = 62 }, POINT{ .x = 31, .y = 62 }, POINT{ .x = 35, .y = 66 }, POINT{ .x = 31, .y = 70 }, POINT{ .x = 11, .y = 70 } },
+const segment_points: [7][6]POINT = .{
+    .{ .{ .x = 7, .y = 6 }, .{ .x = 11, .y = 2 }, .{ .x = 31, .y = 2 }, .{ .x = 35, .y = 6 }, .{ .x = 31, .y = 10 }, .{ .x = 11, .y = 10 } },
+    .{ .{ .x = 6, .y = 7 }, .{ .x = 10, .y = 11 }, .{ .x = 10, .y = 31 }, .{ .x = 6, .y = 35 }, .{ .x = 2, .y = 31 }, .{ .x = 2, .y = 11 } },
+    .{ .{ .x = 36, .y = 7 }, .{ .x = 40, .y = 11 }, .{ .x = 40, .y = 31 }, .{ .x = 36, .y = 35 }, .{ .x = 32, .y = 31 }, .{ .x = 32, .y = 11 } },
+    .{ .{ .x = 7, .y = 36 }, .{ .x = 11, .y = 32 }, .{ .x = 31, .y = 32 }, .{ .x = 35, .y = 36 }, .{ .x = 31, .y = 40 }, .{ .x = 11, .y = 40 } },
+    .{ .{ .x = 6, .y = 37 }, .{ .x = 10, .y = 41 }, .{ .x = 10, .y = 61 }, .{ .x = 6, .y = 65 }, .{ .x = 2, .y = 61 }, .{ .x = 2, .y = 41 } },
+    .{ .{ .x = 36, .y = 37 }, .{ .x = 40, .y = 41 }, .{ .x = 40, .y = 61 }, .{ .x = 36, .y = 65 }, .{ .x = 32, .y = 61 }, .{ .x = 32, .y = 41 } },
+    .{ .{ .x = 7, .y = 66 }, .{ .x = 11, .y = 62 }, .{ .x = 31, .y = 62 }, .{ .x = 35, .y = 66 }, .{ .x = 31, .y = 70 }, .{ .x = 11, .y = 70 } },
 };
 
-const colon_points: [2][4]POINT = [_][4]POINT{
-    [_]POINT{ POINT{ .x = 2, .y = 21 }, POINT{ .x = 6, .y = 17 }, POINT{ .x = 10, .y = 21 }, POINT{ .x = 6, .y = 25 } },
-    [_]POINT{ POINT{ .x = 2, .y = 51 }, POINT{ .x = 6, .y = 47 }, POINT{ .x = 10, .y = 51 }, POINT{ .x = 6, .y = 55 } },
+const colon_points: [2][4]POINT = .{
+    .{ .{ .x = 2, .y = 21 }, .{ .x = 6, .y = 17 }, .{ .x = 10, .y = 21 }, .{ .x = 6, .y = 25 } },
+    .{ .{ .x = 2, .y = 51 }, .{ .x = 6, .y = 47 }, .{ .x = 10, .y = 51 }, .{ .x = 6, .y = 55 } },
 };
 
 fn DisplayDigit(hdc: ?HDC, digit: usize) void {
@@ -226,7 +215,7 @@ const Handler = struct {
 
         _ = win32.InvalidateRect(hwnd, null, TRUE);
     }
-    pub fn OnCreate(self: *Self, hwnd: HWND, _: *win32.CREATESTRUCT) LRESULT {
+    pub fn OnCreate(self: *Self, hwnd: HWND, _: *win32.CREATESTRUCTW) LRESULT {
         self.hbrush_red = win32.CreateSolidBrush(windowsx.RGB(255, 0, 0));
         _ = win32.SetTimer(hwnd, ID_TIMER, 1000, null);
 
@@ -284,9 +273,9 @@ fn WndProc(
     message: u32,
     wparam: WPARAM,
     lparam: LPARAM,
-) callconv(WINAPI) LRESULT {
+) callconv(.winapi) LRESULT {
     const state = struct {
-        var handler = Handler{};
+        var handler: Handler = .{};
     };
 
     return switch (message) {
@@ -296,6 +285,6 @@ fn WndProc(
         WM_TIMER => HANDLE_WM_TIMER(hwnd, wparam, lparam, Handler, &state.handler),
         WM_PAINT => HANDLE_WM_PAINT(hwnd, wparam, lparam, Handler, &state.handler),
         WM_DESTROY => HANDLE_WM_DESTROY(hwnd, wparam, lparam, Handler, &state.handler),
-        else => win32.DefWindowProc(hwnd, message, wparam, lparam),
+        else => win32.DefWindowProcW(hwnd, message, wparam, lparam),
     };
 }
