@@ -13,19 +13,13 @@ const std = @import("std");
 
 const GetStockBrush = @import("windowsx").GetStockBrush;
 
-const WINAPI = std.os.windows.WINAPI;
-
 const sysmetrics = @import("SysMets.zig").sysmetrics;
 const buffer_sizes = @import("SysMets.zig").buffer_sizes;
 const num_lines = @import("SysMets.zig").num_lines;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").system.library_loader;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-    usingnamespace @import("win32").graphics.gdi;
-};
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
+
 const BOOL = win32.BOOL;
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
@@ -41,7 +35,7 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = pCmdLine;
 
     const app_name = L("SysMets1");
@@ -86,7 +80,7 @@ pub export fn wWinMain(
     );
 
     if (null == hwnd) {
-        std.log.err("failed CreateWindowEx(), error {}", .{win32.GetLastError()});
+        std.log.err("failed CreateWindowEx(), error {t}", .{win32.GetLastError()});
         return 0; // premature exit
     }
 
@@ -103,7 +97,7 @@ pub export fn wWinMain(
         if (-1 == ret) {
             // handle the error and/or exit
             // for error call GetLastError();
-            std.log.err("failed message loop, error {}", .{win32.GetLastError()});
+            std.log.err("failed message loop, error {t}", .{win32.GetLastError()});
             return 0;
         } else {
             _ = win32.TranslateMessage(&msg);
@@ -121,7 +115,7 @@ fn WndProc(
     message: u32,
     wParam: win32.WPARAM,
     lParam: win32.LPARAM,
-) callconv(WINAPI) win32.LRESULT {
+) callconv(.winapi) win32.LRESULT {
     const state = struct {
         var cxChar: c_int = undefined;
         var cxCaps: c_int = undefined;
