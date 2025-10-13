@@ -12,14 +12,8 @@
 const std = @import("std");
 
 pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const WINAPI = std.os.windows.WINAPI;
-
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-};
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
 
@@ -41,7 +35,7 @@ fn MessageBoxPrintf(
     }
 
     // MessageBox() always returns IDOK with MB_OK
-    return win32.MessageBox(null, string, L(caption), win32.MB_OK);
+    return win32.MessageBoxW(null, string, L(caption), win32.MB_OK);
 }
 
 pub export fn wWinMain(
@@ -49,7 +43,7 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = hInstance;
     _ = pCmdLine;
     _ = nCmdShow;

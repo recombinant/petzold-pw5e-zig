@@ -1,14 +1,14 @@
 .{
     .name = .petzold_01_hello_msg,
-    .version = "0.0.3",
+    .version = "0.0.4",
     .fingerprint = 0xec2703804b4ab842,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.2",
 
     // zig fetch --save "git+https://github.com/marlersoft/zigwin32"
     .dependencies = .{
         .zigwin32 = .{
-            .url = "git+https://github.com/marlersoft/zigwin32#be58d3816810c1e4c20781cc7223a60906467d3c",
-            .hash = "zigwin32-25.0.28-preview-AAAAAHsJ-wPA4nREAzT_OOkF6gLrornNuHqREfHDADoS",
+            .url = "git+https://github.com/marlersoft/zigwin32#5587b16fa040573846a6bf531301f6206d31a6bf",
+            .hash = "zigwin32-25.0.28-preview-AAAAAICM5AMResOGQnQ85mfe60TTOQeMtt7GRATUOKoP",
         },
     },
 

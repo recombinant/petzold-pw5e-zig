@@ -9,15 +9,10 @@
 //  HelloMsg.c -- Displays "Hello, Windows 98!" in a message box
 //                (c) Charles Petzold, 1998
 // --------------------------------------------------------------
-pub const UNICODE = true;
 
-const WINAPI = @import("std").os.windows.WINAPI;
+pub const UNICODE = true; // used by zigwin32
+const win32 = @import("win32").everything;
 
-const win32 = struct {
-    usingnamespace @import("win32").zig;
-    usingnamespace @import("win32").foundation;
-    usingnamespace @import("win32").ui.windows_and_messaging;
-};
 const L = win32.L;
 const HINSTANCE = win32.HINSTANCE;
 
@@ -26,13 +21,13 @@ pub export fn wWinMain(
     _: ?HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
-) callconv(WINAPI) c_int {
+) callconv(.winapi) c_int {
     _ = hInstance;
     _ = pCmdLine;
     _ = nCmdShow;
 
     // MessageBox() can only return IDOK when using MB_OK
-    _ = win32.MessageBox(null, L("Hello, Windows 98!"), L("HelloMsg"), win32.MB_OK);
+    _ = win32.MessageBoxW(null, L("Hello, Windows 98!"), L("HelloMsg"), win32.MB_OK);
 
     return 0;
 }
