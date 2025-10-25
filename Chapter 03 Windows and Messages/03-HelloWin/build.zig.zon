@@ -1,6 +1,6 @@
 .{
     .name = .petzold_03_hello_win,
-    .version = "0.0.4",
+    .version = "0.0.5",
     .fingerprint = 0x6c0bde985cedc3df,
     .minimum_zig_version = "0.15.2",
 
@@ -12,8 +12,8 @@
             .hash = "zigwin32-25.0.28-preview-AAAAAICM5AMResOGQnQ85mfe60TTOQeMtt7GRATUOKoP",
         },
         .windowsx = .{
-            .url = "git+https://github.com/recombinant/windowsx#f51be499d407686ae045b5abe46bd33ef1f4fa07",
-            .hash = "windowsx-0.0.4-LpPoVNJtAAAuyz25pwQnW6ZAOId9UAscCN-6SMQ5_xGv",
+            .url = "git+https://github.com/recombinant/windowsx#dd156299ff18d92e5c2a5f4e0628bcfd7119b1fc",
+            .hash = "windowsx-0.0.5-LpPoVNB4AABL8zGV2nShPCf2ksjf1QN8vSPmQPEivvqB",
         },
     },
 

@@ -11,49 +11,27 @@
 // ------------------------------------------------------------
 const std = @import("std");
 
-pub const UNICODE = true;
 const win32 = @import("win32").everything;
-
-const BOOL = win32.BOOL;
-const L = win32.L;
-const HINSTANCE = win32.HINSTANCE;
-// const CW_USEDEFAULT = win32.CW_USEDEFAULT;
-const MSG = win32.MSG;
-const HWND = win32.HWND;
-const HDC = win32.HDC;
-const HICON = win32.HICON;
-const HCURSOR = win32.HCURSOR;
-const WNDCLASSEXW = win32.WNDCLASSEXW;
-const WNDCLASS_STYLES = win32.WNDCLASS_STYLES;
-const WINDOW_EX_STYLE = win32.WINDOW_EX_STYLE;
-const WINDOW_STYLE = win32.WINDOW_STYLE;
-// const IDI_APPLICATION = win32.IDI_APPLICATION;
-// const IDC_ARROW = win32.IDC_ARROW;
-// const IMAGE_ICON = win32.IMAGE_ICON;
-// const IMAGE_CURSOR = win32.IMAGE_CURSOR;
-const IMAGE_FLAGS = win32.IMAGE_FLAGS;
-// const WHITE_BRUSH = win32.WHITE_BRUSH;
-
 const windowsx = @import("windowsx");
 
 pub export fn wWinMain(
-    hInstance: HINSTANCE,
-    _: ?HINSTANCE,
+    hInstance: win32.HINSTANCE,
+    _: ?win32.HINSTANCE,
     pCmdLine: [*:0]u16,
     nCmdShow: u32,
 ) callconv(.winapi) c_int {
     _ = pCmdLine;
 
-    const app_name = L("HelloWin");
-    const wndclassex: WNDCLASSEXW = .{
-        .cbSize = @sizeOf(WNDCLASSEXW),
-        .style = WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
+    const app_name = win32.L("HelloWin");
+    const wndclassex: win32.WNDCLASSEXW = .{
+        .cbSize = @sizeOf(win32.WNDCLASSEXW),
+        .style = win32.WNDCLASS_STYLES{ .HREDRAW = 1, .VREDRAW = 1 },
         .lpfnWndProc = WndProc,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = hInstance,
-        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
-        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hIcon = @ptrCast(win32.LoadImageW(null, win32.IDI_APPLICATION, win32.IMAGE_ICON, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
+        .hCursor = @ptrCast(win32.LoadImageW(null, win32.IDC_ARROW, win32.IMAGE_CURSOR, 0, 0, win32.IMAGE_FLAGS{ .SHARED = 1, .DEFAULTSIZE = 1 })),
         .hbrBackground = windowsx.GetStockBrush(win32.WHITE_BRUSH),
         .lpszMenuName = null,
         .lpszClassName = app_name,
@@ -71,9 +49,9 @@ pub export fn wWinMain(
 
     const hwnd = win32.CreateWindowExW(
         // https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-        WINDOW_EX_STYLE{},
+        win32.WINDOW_EX_STYLE{},
         @ptrFromInt(atom),
-        L("The Hello Program"),
+        win32.L("The Hello Program"),
         win32.WS_OVERLAPPEDWINDOW,
         win32.CW_USEDEFAULT, // initial x position
         win32.CW_USEDEFAULT, // initial y position
@@ -97,7 +75,7 @@ pub export fn wWinMain(
     }
 
     var msg: win32.MSG = undefined;
-    var ret: BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
+    var ret: win32.BOOL = win32.GetMessageW(&msg, null, 0, 0); // three states: -1, 0 or non-zero
 
     while (0 != ret) {
         if (-1 == ret) {
@@ -115,7 +93,7 @@ pub export fn wWinMain(
     return @bitCast(@as(c_uint, @truncate(msg.wParam))); // WM_QUIT
 }
 
-fn WndProc(hwnd: HWND, message: u32, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.winapi) win32.LRESULT {
+fn WndProc(hwnd: win32.HWND, message: u32, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.winapi) win32.LRESULT {
     switch (message) {
         win32.WM_CREATE => {
             const data = @embedFile("HelloWin.wav");
@@ -124,14 +102,14 @@ fn WndProc(hwnd: HWND, message: u32, wParam: win32.WPARAM, lParam: win32.LPARAM)
         },
         win32.WM_PAINT => {
             var ps: win32.PAINTSTRUCT = undefined;
-            const hdc: ?HDC = win32.BeginPaint(hwnd, &ps);
+            const hdc: ?win32.HDC = win32.BeginPaint(hwnd, &ps);
 
             var rect: win32.RECT = undefined;
             _ = win32.GetClientRect(hwnd, &rect);
 
             _ = win32.DrawTextW(
                 hdc,
-                L("Hello, Windows 98!"),
+                win32.L("Hello, Windows 98!"),
                 -1,
                 &rect,
                 win32.DRAW_TEXT_FORMAT{ .SINGLELINE = 1, .CENTER = 1, .VCENTER = 1 },
